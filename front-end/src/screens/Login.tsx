@@ -78,7 +78,7 @@ export default function Login({ onLogin, onGoRegister }: LoginProps) {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-leaf-500 shadow-lg shadow-leaf-500/20">
             <Sprout size={32} className="text-paper" />
           </div>
-          <h1 className="font-serif text-3xl font-semibold text-ink">Kisan Sathi</h1>
+          <h1 className="font-serif text-3xl font-semibold text-ink">Moolya</h1>
           <p className="mt-1 text-sm text-gray-500">Sell your produce directly to buyers. No middlemen.</p>
         </div>
 

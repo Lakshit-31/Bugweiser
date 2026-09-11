@@ -29,7 +29,7 @@ export default function Navbar({ active, onNavigate, farmer }: NavbarProps) {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-leaf-500">
               <Sprout size={20} className="text-paper" />
             </div>
-            <span className="font-serif text-xl font-semibold text-ink">Kisan Sathi</span>
+            <span className="font-serif text-xl font-semibold text-ink">Moolya</span>
           </button>
 
           {/* Desktop nav links */}

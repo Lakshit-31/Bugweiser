@@ -15,17 +15,80 @@ const qualityColors: Record<string, string> = {
   C: 'bg-rust-50 text-rust-500 border-rust-100',
 };
 
+/**
+ * Dynamic crop image mapping helper.
+ * Safely maps crop names dynamically using keyword matching so any crop
+ * gets a matching real image, or returns null for fallback icon without throwing errors.
+ */
+function getCropImage(cropName?: string, itemImage?: string): string | null {
+  if (itemImage) return itemImage;
+  if (!cropName) return null;
+
+  const lower = String(cropName).toLowerCase();
+
+  if (lower.includes('wheat') || lower.includes('gehun') || lower.includes('गेहूं') || lower.includes('<ctrl42>ਕਣਕ')) {
+    return 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('tomato') || lower.includes('tamatar') || lower.includes('टमाटर') || lower.includes('ਟਮਾਟਰ')) {
+    return 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('onion') || lower.includes('pyaz') || lower.includes('प्याज') || lower.includes('ਪਿਆਜ਼')) {
+    return 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('rice') || lower.includes('basmati') || lower.includes('paddy') || lower.includes('चावल') || lower.includes('ਚੌਲ')) {
+    return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('mustard') || lower.includes('sarson') || lower.includes('सरसों') || lower.includes('ਸਰੋਂ')) {
+    return 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('cotton') || lower.includes('kapas') || lower.includes('कपास') || lower.includes('ਕਪਾਹ')) {
+    return 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('sugarcane') || lower.includes('ganna') || lower.includes('गन्ना') || lower.includes('ਗੰਨਾ')) {
+    return 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('cumin') || lower.includes('jeera') || lower.includes('जीरा')) {
+    return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('gram') || lower.includes('chana') || lower.includes('chickpea') || lower.includes('चना')) {
+    return 'https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('bajra') || lower.includes('millet') || lower.includes('pearl') || lower.includes('बाजरा')) {
+    return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('potato') || lower.includes('aalu') || lower.includes('आलू')) {
+    return 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=800&q=80';
+  }
+  if (lower.includes('soybean') || lower.includes('soya') || lower.includes('सोयाबीन')) {
+    return 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=800&q=80';
+  }
+
+  return null;
+}
+
 export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
   const [produce, setProduce] = useState<Produce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [imageErrorMap, setImageErrorMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    getProduce().then((data) => {
-      setProduce(data);
-      setLoading(false);
-    });
+    getProduce()
+      .then((data) => {
+        setProduce(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching produce:', err);
+        setProduce([]);
+        setLoading(false);
+      });
   }, []);
+
+  const handleImageError = (id: string) => {
+    if (!id) return;
+    setImageErrorMap((prev) => ({ ...prev, [id]: true }));
+  };
 
   return (
     <div className="animate-fade-in">
@@ -44,7 +107,7 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
         <div className="flex items-center justify-center py-24">
           <Loader2 size={32} className="animate-spin text-leaf-400" />
         </div>
-      ) : produce.length === 0 ? (
+      ) : !produce || produce.length === 0 ? (
         <EmptyState
           icon={<Sprout size={28} />}
           title="No produce listed yet"
@@ -56,61 +119,117 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {produce.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onViewMatches(item.id)}
-              className="card group text-left"
-            >
-              {/* Crop name + quality + status */}
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <h3 className="font-serif text-lg font-semibold text-ink group-hover:text-leaf-600 transition-colors">
-                    {item.cropName}
-                  </h3>
-                  <span className={`mt-1 inline-block rounded-md border px-2 py-0.5 text-xs font-semibold ${qualityColors[item.quality]}`}>
-                    Grade {item.quality}
-                  </span>
-                </div>
-                <StatusPill status={item.status} />
-              </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {produce.map((item, idx) => {
+            if (!item) return null;
+            const itemId = item.id || `item-${idx}`;
+            const cropImageUrl = getCropImage(item.cropName, item.image);
+            const hasImageFailed = Boolean(imageErrorMap[itemId]);
+            const showImage = Boolean(cropImageUrl && !hasImageFailed);
+            const qualityStyle = qualityColors[item.quality] || qualityColors['A'];
 
-              {/* Location */}
-              <div className="mb-2.5 flex items-center gap-1.5 text-sm text-gray-500">
-                <MapPin size={14} className="text-leaf-400" />
-                {item.location}
-              </div>
+            const formattedHarvestDate = item.harvestDate
+              ? new Date(item.harvestDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+              : 'N/A';
 
-              {/* Details grid */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            return (
+              <button
+                key={itemId}
+                onClick={() => onViewMatches(itemId)}
+                className="card group text-left p-0 overflow-hidden flex flex-col justify-between hover:border-leaf-300"
+              >
                 <div>
-                  <span className="text-gray-400">Quantity</span>
-                  <p className="font-semibold text-ink">{item.quantity.toLocaleString()} {item.unit}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400">Expected Price</span>
-                  <p className="font-semibold text-ink">₹{item.expectedPrice}/{item.unit}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400">Available</span>
-                  <p className="font-semibold text-ink">{item.availableQuantity.toLocaleString()} {item.unit}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400">Harvest Date</span>
-                  <p className="font-semibold text-ink">
-                    {new Date(item.harvestDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                  </p>
-                </div>
-              </div>
+                  {/* Produce Image / Dynamic Crop Photo Header */}
+                  <div className="relative h-44 w-full bg-leaf-50/60 overflow-hidden border-b border-black/5 flex items-center justify-center">
+                    {showImage ? (
+                      <img
+                        src={cropImageUrl!}
+                        alt={item.cropName || 'Crop produce'}
+                        onError={() => handleImageError(itemId)}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      /* Neutral produce placeholder icon when image unavailable */
+                      <div className="flex flex-col items-center justify-center text-leaf-600 gap-1.5 p-4 text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-leaf-100/80 text-leaf-700">
+                          <Sprout size={28} />
+                        </div>
+                        <span className="text-[11px] font-bold text-leaf-700 uppercase tracking-wider">
+                          Agricultural Produce
+                        </span>
+                      </div>
+                    )}
 
-              {/* View matches CTA */}
-              <div className="mt-4 flex items-center gap-1.5 border-t border-gray-100 pt-3 text-sm font-medium text-leaf-600 group-hover:text-leaf-700">
-                <TrendingUp size={14} />
-                View buyer matches
-              </div>
-            </button>
-          ))}
+                    {/* Floating Status Pill over image */}
+                    <div className="absolute top-3 right-3 z-10 shadow-xs">
+                      <StatusPill status={item.status || 'Available'} />
+                    </div>
+
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+                  </div>
+
+                  {/* Card Content Body */}
+                  <div className="p-4 sm:p-5 space-y-3">
+                    {/* Crop name + quality */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-serif text-lg font-bold text-ink group-hover:text-leaf-600 transition-colors leading-snug">
+                          {item.cropName || 'Unnamed Crop'}
+                        </h3>
+                        <span className={`mt-1.5 inline-block rounded-md border px-2 py-0.5 text-xs font-semibold ${qualityStyle}`}>
+                          Grade {item.quality || 'A'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                      <MapPin size={14} className="text-leaf-500 shrink-0" />
+                      <span className="truncate">{item.location || 'Location Not Specified'}</span>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs bg-paper p-3 rounded-xl border border-leaf-100">
+                      <div>
+                        <span className="text-gray-400 font-medium">Quantity</span>
+                        <p className="font-bold text-ink text-sm mt-0.5">
+                          {typeof item.quantity === 'number' ? item.quantity.toLocaleString('en-IN') : item.quantity} {item.unit || 'kg'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 font-medium">Expected Price</span>
+                        <p className="font-bold text-leaf-600 text-sm mt-0.5">₹{item.expectedPrice}/{item.unit || 'kg'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 font-medium">Available</span>
+                        <p className="font-bold text-ink mt-0.5">
+                          {typeof item.availableQuantity === 'number' ? item.availableQuantity.toLocaleString('en-IN') : item.availableQuantity} {item.unit || 'kg'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 font-medium">Harvest Date</span>
+                        <p className="font-bold text-ink mt-0.5">
+                          {formattedHarvestDate}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* View matches CTA */}
+                <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs font-bold text-leaf-600 group-hover:text-leaf-700">
+                    <span className="flex items-center gap-1.5">
+                      <TrendingUp size={15} />
+                      View buyer matches
+                    </span>
+                    <span className="text-[11px] font-semibold text-gray-400">Match score available →</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -189,7 +308,7 @@ function NewProduceForm({
               <input
                 value={form.cropName}
                 onChange={(e) => setForm({ ...form, cropName: e.target.value })}
-                placeholder="e.g. Wheat, Mustard, Bajra"
+                placeholder="e.g. Wheat, Mustard, Bajra, Tomatoes"
                 className="input-field"
               />
             </div>

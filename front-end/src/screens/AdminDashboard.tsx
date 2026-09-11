@@ -62,7 +62,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 <ShieldCheck size={20} className="text-paper" />
               </div>
               <div>
-                <span className="font-serif text-xl font-semibold text-paper">Kisan Sathi</span>
+                <span className="font-serif text-xl font-semibold text-paper">Moolya</span>
                 <span className="ml-2 rounded-full bg-dusk-400/40 px-2 py-0.5 text-xs font-semibold text-paper">
                   Admin
                 </span>

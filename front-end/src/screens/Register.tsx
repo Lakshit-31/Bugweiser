@@ -118,7 +118,7 @@ export default function Register({ onRegister, onGoLogin, initialRole }: Registe
             <Sprout size={32} className="text-paper" />
           </div>
           <h1 className="font-serif text-3xl font-semibold text-ink">Create your account</h1>
-          <p className="mt-1 text-sm text-gray-500">Join Kisan Sathi to reach verified buyers directly.</p>
+          <p className="mt-1 text-sm text-gray-500">Join Moolya to reach verified buyers directly.</p>
         </div>
 
         <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-[0_4px_24px_rgba(30,43,31,0.06)]">

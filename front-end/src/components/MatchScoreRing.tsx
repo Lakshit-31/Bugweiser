@@ -1,15 +1,24 @@
+import React from 'react';
+
 interface MatchScoreRingProps {
   score: number;
   size?: number;
+  strokeWidth?: number;
+  animated?: boolean;
 }
 
-export default function MatchScoreRing({ score, size = 56 }: MatchScoreRingProps) {
-  const radius = (size - 8) / 2;
+export default function MatchScoreRing({
+  score,
+  size = 56,
+  strokeWidth = 4,
+  animated = true,
+}: MatchScoreRingProps) {
+  const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
 
-  const color = score >= 85 ? '#2F5233' : score >= 65 ? '#E3A008' : '#B5482F';
-  const bgColor = score >= 85 ? '#EAF1EC' : score >= 65 ? '#FDF6E3' : '#F8E8E3';
+  const color = score >= 85 ? '#4CAF50' : score >= 65 ? '#E3A008' : '#B5482F';
+  const bgColor = score >= 85 ? 'rgba(76, 175, 80, 0.2)' : score >= 65 ? '#FDF6E3' : '#F8E8E3';
 
   return (
     <div
@@ -23,7 +32,7 @@ export default function MatchScoreRing({ score, size = 56 }: MatchScoreRingProps
           r={radius}
           fill="none"
           stroke={bgColor}
-          strokeWidth={4}
+          strokeWidth={strokeWidth}
         />
         <circle
           cx={size / 2}
@@ -31,19 +40,22 @@ export default function MatchScoreRing({ score, size = 56 }: MatchScoreRingProps
           r={radius}
           fill="none"
           stroke={color}
-          strokeWidth={4}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
+          style={{ transition: animated ? 'stroke-dashoffset 1s ease-out' : 'none' }}
         />
       </svg>
-      <span
-        className="absolute font-sans text-sm font-bold"
-        style={{ color }}
-      >
-        {score}
-      </span>
+      <div className="absolute flex flex-col items-center justify-center">
+        <span
+          className="font-sans text-base font-extrabold leading-none text-white drop-shadow-sm"
+          style={{ color: score >= 85 ? '#FFFFFF' : color }}
+        >
+          {score}
+        </span>
+        <span className="text-[9px] font-bold text-marigold-300 uppercase tracking-tight">Match</span>
+      </div>
     </div>
   );
 }

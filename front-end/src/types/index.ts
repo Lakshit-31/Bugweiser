@@ -33,6 +33,7 @@ export interface AdminUser {
 export interface Produce {
   id: string;
   cropName: string;
+  category?: 'Grains' | 'Vegetables' | 'Oilseeds' | 'Commercial' | 'Pulses' | 'Spices';
   quantity: number;
   unit: string;
   quality: 'A' | 'B' | 'C';
@@ -41,6 +42,19 @@ export interface Produce {
   location: string;
   availableQuantity: number;
   status: 'Available' | 'Reserved' | 'Sold Out';
+  farmerName?: string;
+  image?: string;
+  matchScore?: number;
+  mandiPrice?: number;
+}
+
+export type LanguageCode = 'en' | 'hi' | 'mr' | 'pa';
+
+export interface LanguageOption {
+  code: LanguageCode;
+  name: string;
+  nativeName: string;
+  flag: string;
 }
 
 export interface BuyerMatch {
