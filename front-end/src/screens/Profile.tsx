@@ -243,7 +243,7 @@ export default function ProfileScreen({ onLogout, currentLang }: ProfileScreenPr
               }}
               className="btn-ghost flex-1"
             >
-              {t.cancel}
+              {(t as any).cancel || 'Cancel'}
             </button>
           </>
         ) : (

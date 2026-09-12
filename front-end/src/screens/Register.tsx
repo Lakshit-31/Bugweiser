@@ -135,7 +135,7 @@ export default function Register({ onRegister, onGoLogin, initialRole, onGoHome 
 
         <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-[0_4px_24px_rgba(30,43,31,0.06)]">
           {/* Role selector tabs */}
-          <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-1">
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-1">
             {roleTabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -157,6 +157,39 @@ export default function Register({ onRegister, onGoLogin, initialRole, onGoHome 
                 </button>
               );
             })}
+          </div>
+
+          {/* 1-Click SIH Auto-fill for registration demo */}
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/70 p-2.5 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (role === 'buyer') {
+                  setBuyerForm({
+                    name: 'Vikram Sharma',
+                    phone: '9876501234',
+                    businessName: 'Ajmer Grain Mandi Co-op Ltd.',
+                    state: 'Rajasthan',
+                    district: 'Ajmer',
+                    city: 'Ajmer',
+                    gstNumber: '08ABCDE1234F1Z5',
+                  });
+                } else {
+                  setFarmerForm({
+                    name: 'Rameshwar Lal Jat',
+                    phone: '9876543210',
+                    state: 'Rajasthan',
+                    district: 'Ajmer',
+                    village: 'Gegal',
+                    farmSize: '12 acres',
+                    cropsGrown: 'Wheat, Mustard, Gram',
+                  });
+                }
+              }}
+              className="w-full rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <span>⚡ Auto-fill SIH Demo {role === 'buyer' ? 'Enterprise Buyer' : 'Farmer'} Data</span>
+            </button>
           </div>
 
           {step === 'details' ? (

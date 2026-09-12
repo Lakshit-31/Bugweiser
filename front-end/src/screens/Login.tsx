@@ -96,7 +96,7 @@ export default function Login({ onLogin, onGoRegister, onGoHome }: LoginProps) {
 
         <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-[0_4px_24px_rgba(30,43,31,0.06)]">
           {/* Role selector tabs */}
-          <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-1">
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-1">
             {roleTabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -119,6 +119,7 @@ export default function Login({ onLogin, onGoRegister, onGoHome }: LoginProps) {
               );
             })}
           </div>
+
 
           {step === 'phone' ? (
             <>
