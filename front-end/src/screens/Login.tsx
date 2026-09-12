@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { Sprout, ArrowRight, Phone, Shield, Loader2, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Sprout, ArrowRight, Phone, Shield, Loader2, ShoppingBag, ShieldCheck, ArrowLeft } from 'lucide-react';
 import type { UserRole } from '@/types';
+import { MoolyaFullLogo } from '@/components/MoolyaLogo';
 
 interface LoginProps {
   onLogin: (role: UserRole) => void;
   onGoRegister: (role: UserRole) => void;
+  onGoHome?: () => void;
 }
 
 const ADMIN_PHONE = '9000000000';
 
-export default function Login({ onLogin, onGoRegister }: LoginProps) {
+export default function Login({ onLogin, onGoRegister, onGoHome }: LoginProps) {
   const [role, setRole] = useState<UserRole>('farmer');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
@@ -71,15 +73,25 @@ export default function Login({ onLogin, onGoRegister }: LoginProps) {
   ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-paper px-4">
+    <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-8">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-leaf-500 shadow-lg shadow-leaf-500/20">
-            <Sprout size={32} className="text-paper" />
+        {/* Back to Home link */}
+        {onGoHome && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={onGoHome}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-leaf-600"
+            >
+              <ArrowLeft size={16} /> Back to Home
+            </button>
           </div>
-          <h1 className="font-serif text-3xl font-semibold text-ink">Moolya</h1>
-          <p className="mt-1 text-sm text-gray-500">Sell your produce directly to buyers. No middlemen.</p>
+        )}
+
+        {/* Centered Full Logo Header */}
+        <div className="mb-8 text-center">
+          <MoolyaFullLogo />
+          <p className="mt-2 text-sm text-gray-500">Sell your produce directly to buyers. No middlemen.</p>
         </div>
 
         <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-[0_4px_24px_rgba(30,43,31,0.06)]">

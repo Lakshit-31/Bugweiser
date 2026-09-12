@@ -1,4 +1,5 @@
-import { Sprout, User } from 'lucide-react';
+import { User } from 'lucide-react';
+import { MoolyaIcon } from '@/components/MoolyaLogo';
 import type { Farmer } from '@/types';
 
 export type ScreenName = 'produce' | 'orders' | 'payments' | 'reviews' | 'profile';
@@ -24,12 +25,9 @@ export default function Navbar({ active, onNavigate, farmer }: NavbarProps) {
         <div className="flex items-center justify-between py-3">
           <button
             onClick={() => onNavigate('produce')}
-            className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+            className="flex items-center transition-opacity hover:opacity-80 shrink-0"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-leaf-500">
-              <Sprout size={20} className="text-paper" />
-            </div>
-            <span className="font-serif text-xl font-semibold text-ink">Moolya</span>
+            <MoolyaIcon className="h-10 sm:h-11 w-auto" />
           </button>
 
           {/* Desktop nav links */}

@@ -94,7 +94,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-paper text-ink font-sans flex flex-col selection:bg-leaf-200 selection:text-leaf-800">
-      
+
       {/* 
         NAVBAR SEPARATION:
         - Homepage navbar rendered ONLY on the Home page (currentView === 'home').
@@ -108,6 +108,7 @@ export default function App() {
           onNavigateSection={handleHomepageNav}
           isLoggedIn={isLoggedIn}
           onLoginClick={() => setCurrentView('login')}
+          onSignupClick={() => setCurrentView('register')}
           onLogoutClick={handleLogout}
           farmer={farmer}
           onOpenDashboard={() => setCurrentView('produce')}
@@ -119,7 +120,7 @@ export default function App() {
             onNavigate={(screen) => setCurrentView(screen as MainView)}
             farmer={farmer}
           />
-          
+
           {/* Quick link back to Homepage */}
           <div className="bg-white/80 border-b border-black/5 backdrop-blur-xs py-2 px-4">
             <div className="mx-auto max-w-content flex items-center justify-between text-xs font-semibold">
@@ -139,7 +140,7 @@ export default function App() {
 
       {/* Main View Router */}
       <main className="flex-1 mx-auto max-w-content px-4 py-6 sm:px-6 sm:py-8 w-full">
-        
+
         {/* HOMEPAGE VIEW */}
         {currentView === 'home' && (
           <Homepage
@@ -196,6 +197,10 @@ export default function App() {
               setRegisterRole(role);
               setCurrentView('register');
             }}
+            onGoHome={() => {
+              setCurrentView('home');
+              setActiveSection('home');
+            }}
           />
         )}
 
@@ -205,6 +210,10 @@ export default function App() {
             onRegister={handleLoginSuccess}
             onGoLogin={() => setCurrentView('login')}
             initialRole={registerRole}
+            onGoHome={() => {
+              setCurrentView('home');
+              setActiveSection('home');
+            }}
           />
         )}
 

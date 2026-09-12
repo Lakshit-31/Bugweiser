@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Sprout, ArrowRight, Shield, Loader2, User, ShoppingBag, MapPin } from 'lucide-react';
+import { Sprout, ArrowRight, Shield, Loader2, User, ShoppingBag, MapPin, ArrowLeft } from 'lucide-react';
 import type { UserRole } from '@/types';
+import { MoolyaFullLogo } from '@/components/MoolyaLogo';
 
 interface RegisterProps {
   onRegister: (role: UserRole) => void;
   onGoLogin: () => void;
   initialRole: UserRole;
+  onGoHome?: () => void;
 }
 
 interface FarmerForm {
@@ -28,7 +30,7 @@ interface BuyerForm {
   gstNumber: string;
 }
 
-export default function Register({ onRegister, onGoLogin, initialRole }: RegisterProps) {
+export default function Register({ onRegister, onGoLogin, initialRole, onGoHome }: RegisterProps) {
   const [role, setRole] = useState<UserRole>(initialRole === 'admin' ? 'farmer' : initialRole);
   const [step, setStep] = useState<'details' | 'otp'>('details');
   const [farmerForm, setFarmerForm] = useState<FarmerForm>({
@@ -112,13 +114,23 @@ export default function Register({ onRegister, onGoLogin, initialRole }: Registe
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-8">
       <div className="w-full max-w-[520px]">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-leaf-500 shadow-lg shadow-leaf-500/20">
-            <Sprout size={32} className="text-paper" />
+        {/* Back to Home link */}
+        {onGoHome && (
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={onGoHome}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-leaf-600"
+            >
+              <ArrowLeft size={16} /> Back to Home
+            </button>
           </div>
-          <h1 className="font-serif text-3xl font-semibold text-ink">Create your account</h1>
-          <p className="mt-1 text-sm text-gray-500">Join Moolya to reach verified buyers directly.</p>
+        )}
+
+        {/* Centered Full Logo Header */}
+        <div className="mb-8 text-center">
+          <MoolyaFullLogo />
+          <p className="mt-2 text-sm text-gray-500">Join Moolya to reach verified buyers directly.</p>
         </div>
 
         <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-[0_4px_24px_rgba(30,43,31,0.06)]">

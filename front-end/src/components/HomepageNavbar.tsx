@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sprout, Globe, LogOut, User, Menu, X, ChevronDown, LayoutDashboard, Settings, ShoppingBag } from 'lucide-react';
+import { Globe, LogOut, User, Menu, X, ChevronDown, LayoutDashboard, Settings, ShoppingBag } from 'lucide-react';
+import { MoolyaIcon } from '@/components/MoolyaLogo';
 import type { Farmer, LanguageCode } from '@/types';
 import { languageOptions, translations } from '@/data/translations';
 
@@ -12,6 +13,7 @@ interface HomepageNavbarProps {
   onNavigateSection: (target: NavTarget) => void;
   isLoggedIn: boolean;
   onLoginClick: () => void;
+  onSignupClick?: () => void;
   onLogoutClick: () => void;
   farmer?: Farmer | null;
   onOpenDashboard?: () => void;
@@ -24,6 +26,7 @@ export default function HomepageNavbar({
   onNavigateSection,
   isLoggedIn,
   onLoginClick,
+  onSignupClick,
   onLogoutClick,
   farmer,
   onOpenDashboard,
@@ -72,22 +75,11 @@ export default function HomepageNavbar({
       <div className="mx-auto max-w-content px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between gap-4">
           
-          {/* Left: Logo / Platform Name */}
           <button
             onClick={() => handleNavClick('home')}
-            className="flex items-center gap-2.5 transition-transform hover:scale-[1.01] active:scale-[0.99] text-left shrink-0"
+            className="flex items-center transition-transform hover:scale-[1.01] active:scale-[0.99] shrink-0"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-leaf-500 text-paper shadow-md">
-              <Sprout size={22} className="text-white" />
-            </div>
-            <div>
-              <span className="font-serif text-xl font-bold tracking-tight text-ink block leading-none">
-                Moolya
-              </span>
-              <span className="text-[10px] font-semibold text-leaf-600 tracking-wider uppercase hidden sm:block">
-                Direct Agricultural Marketplace
-              </span>
-            </div>
+            <MoolyaIcon className="h-10 sm:h-12 w-auto" />
           </button>
 
           {/* Middle: Nav Links (Desktop) - Home | How It Works | Features | Listings | Testimonials | Contact */}
@@ -225,7 +217,7 @@ export default function HomepageNavbar({
                   {t.login}
                 </button>
                 <button
-                  onClick={onLoginClick}
+                  onClick={onSignupClick || onLoginClick}
                   className="btn-primary text-xs py-2 px-4 shadow-sm font-bold"
                 >
                   {t.signUp}
@@ -290,7 +282,8 @@ export default function HomepageNavbar({
                 </button>
                 <button
                   onClick={() => {
-                    onLoginClick();
+                    if (onSignupClick) onSignupClick();
+                    else onLoginClick();
                     setMobileMenuOpen(false);
                   }}
                   className="rounded-xl bg-leaf-500 py-2 text-xs font-bold text-white text-center shadow-xs"
