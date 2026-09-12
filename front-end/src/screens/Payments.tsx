@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Wallet, Loader2, IndianRupee, Calendar, TrendingUp, Receipt } from 'lucide-react';
-import type { Transaction } from '@/types';
+import type { Transaction, LanguageCode } from '@/types';
 import { getTransactions } from '@/data/api';
 import EmptyState from '@/components/EmptyState';
+import { translations } from '@/data/translations';
 
 const paymentStatusConfig: Record<string, { bg: string; text: string; dot: string }> = {
   Received:   { bg: 'bg-leaf-50',   text: 'text-leaf-600',   dot: 'bg-leaf-500' },
@@ -10,7 +11,12 @@ const paymentStatusConfig: Record<string, { bg: string; text: string; dot: strin
   Pending:    { bg: 'bg-marigold-50', text: 'text-marigold-600', dot: 'bg-marigold-400' },
 };
 
-export default function PaymentsScreen() {
+interface PaymentsScreenProps {
+  currentLang: LanguageCode;
+}
+
+export default function PaymentsScreen({ currentLang }: PaymentsScreenProps) {
+  const t = translations[currentLang] || translations.en;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,8 +38,8 @@ export default function PaymentsScreen() {
   return (
     <div className="animate-fade-in">
       <div className="mb-6">
-        <h1 className="font-serif text-2xl font-semibold text-ink">Payments</h1>
-        <p className="mt-1 text-sm text-gray-500">Track your earnings and payment status from buyers.</p>
+        <h1 className="font-serif text-2xl font-semibold text-ink">{t.paymentsTitle}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t.paymentsSub}</p>
       </div>
 
       {loading ? (
@@ -49,13 +55,13 @@ export default function PaymentsScreen() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-leaf-400/30">
                   <Wallet size={20} />
                 </div>
-                <span className="text-sm font-medium text-leaf-100">Total Received</span>
+                <span className="text-sm font-medium text-leaf-100">{t.totalReceivedLabel}</span>
               </div>
               <p className="font-serif text-3xl font-bold">
                 ₹{totalReceived.toLocaleString('en-IN')}
               </p>
               <p className="mt-1 text-sm text-leaf-100">
-                From {transactions.filter((t) => t.paymentStatus === 'Received').length} completed transactions
+                {transactions.filter((t) => t.paymentStatus === 'Received').length} {t.completedTxnsSub}
               </p>
             </div>
 
@@ -64,25 +70,25 @@ export default function PaymentsScreen() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-500">
                   <TrendingUp size={20} />
                 </div>
-                <span className="text-sm font-medium text-sky-600">In Processing</span>
+                <span className="text-sm font-medium text-sky-600">{t.inProcessingLabel}</span>
               </div>
               <p className="font-serif text-3xl font-bold text-sky-600">
                 ₹{totalProcessing.toLocaleString('en-IN')}
               </p>
               <p className="mt-1 text-sm text-sky-500">
-                Expected to arrive in 2-3 business days
+                {t.expectedArriveSub}
               </p>
             </div>
           </div>
 
           {/* Transactions list */}
-          <h2 className="mb-3 font-serif text-lg font-semibold text-ink">Transaction History</h2>
+          <h2 className="mb-3 font-serif text-lg font-semibold text-ink">{t.txnHistoryTitle}</h2>
 
           {transactions.length === 0 ? (
             <EmptyState
               icon={<Receipt size={28} />}
-              title="No transactions yet"
-              description="Payments from completed orders will show up here automatically once buyers confirm."
+              title={t.noTxnTitle}
+              description={t.noTxnSub}
             />
           ) : (
             <div className="space-y-3">

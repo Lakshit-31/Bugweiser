@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, MapPin, Calendar, Award, ShieldCheck, MessageCircle, Phone, Sparkles, CheckCircle2, TrendingUp, DollarSign } from 'lucide-react';
+import { X, MapPin, Calendar, Award, ShieldCheck, MessageCircle, Phone, Sparkles, CheckCircle2, TrendingUp, DollarSign, Sprout } from 'lucide-react';
 import type { Produce, LanguageCode } from '@/types';
 import { translations } from '@/data/translations';
+import { getCropImage } from '@/data/cropImages';
 
 interface ProduceDetailModalProps {
   produce: Produce | null;
@@ -13,6 +14,7 @@ interface ProduceDetailModalProps {
 export default function ProduceDetailModal({ produce, currentLang, onClose, onContactFarmer }: ProduceDetailModalProps) {
   if (!produce) return null;
   const t = translations[currentLang] || translations.en;
+  const cropImageUrl = getCropImage(produce.cropName, produce.image);
 
   const [inquirySent, setInquirySent] = useState(false);
   const [offerPrice, setOfferPrice] = useState(produce.expectedPrice);
@@ -44,18 +46,29 @@ export default function ProduceDetailModal({ produce, currentLang, onClose, onCo
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Image & Quick Badges Column */}
           <div className="md:col-span-5 space-y-4">
-            <div className="relative h-64 md:h-full min-h-[220px] rounded-2xl overflow-hidden bg-gray-100 shadow-md">
-              <img
-                src={produce.image || 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80'}
-                alt={produce.cropName}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+            <div className="relative h-64 md:h-full min-h-[220px] rounded-2xl overflow-hidden bg-leaf-50 flex items-center justify-center shadow-md">
+              {cropImageUrl ? (
+                <img
+                  src={cropImageUrl}
+                  alt={produce.cropName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-leaf-600 gap-1.5 p-4 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-leaf-100/80 text-leaf-700">
+                    <Sprout size={32} />
+                  </div>
+                  <span className="text-xs font-bold text-leaf-700 uppercase tracking-wider">
+                    Agricultural Produce
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
               
               {/* Match score badge overlay */}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-leaf-500/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-white shadow-lg border border-white/20">
-                <Sparkles size={14} className="text-marigold-300" />
-                <span>{produce.matchScore || 94}/100 Match Score</span>
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-md px-3 py-1 text-xs font-extrabold text-gray-900 shadow-lg border border-leaf-200">
+                <Sparkles size={14} className="text-leaf-700" />
+                <span className="text-gray-900">{produce.matchScore || 94}/100 Match Score</span>
               </div>
 
               {/* Quality & Status pill */}

@@ -135,7 +135,7 @@ export const featuredProduceListings: Produce[] = [
     farmerName: 'Manishbhai Shah',
     matchScore: 97,
     mandiPrice: 25200,
-    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80',
   },
 ];
 

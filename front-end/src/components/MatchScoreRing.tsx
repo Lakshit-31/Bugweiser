@@ -22,7 +22,7 @@ export default function MatchScoreRing({
 
   return (
     <div
-      className="relative flex shrink-0 items-center justify-center"
+      className="relative flex shrink-0 items-center justify-center rounded-full bg-white shadow-xs"
       style={{ width: size, height: size }}
     >
       <svg width={size} height={size} className="-rotate-90">
@@ -49,12 +49,12 @@ export default function MatchScoreRing({
       </svg>
       <div className="absolute flex flex-col items-center justify-center">
         <span
-          className="font-sans text-base font-extrabold leading-none text-white drop-shadow-sm"
-          style={{ color: score >= 85 ? '#FFFFFF' : color }}
+          className="font-sans text-base font-black leading-none text-gray-900"
+          style={{ color: '#0F291E' }}
         >
           {score}
         </span>
-        <span className="text-[9px] font-bold text-marigold-300 uppercase tracking-tight">Match</span>
+        <span className="text-[9px] font-extrabold text-leaf-800 uppercase tracking-tight">Match</span>
       </div>
     </div>
   );

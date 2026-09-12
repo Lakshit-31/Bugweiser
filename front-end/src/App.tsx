@@ -13,6 +13,7 @@ import ProfileScreen from '@/screens/Profile';
 import Login from '@/screens/Login';
 import Register from '@/screens/Register';
 import AdminDashboard from '@/screens/AdminDashboard';
+import { translations } from '@/data/translations';
 
 export type MainView =
   | 'home'
@@ -37,6 +38,8 @@ export default function App() {
   const [farmer, setFarmer] = useState<Farmer | null>(null);
   const [selectedProduceId, setSelectedProduceId] = useState<string | null>(null);
   const [registerRole, setRegisterRole] = useState<UserRole>('farmer');
+
+  const t = translations[currentLang] || translations.en;
 
   useEffect(() => {
     if (isLoggedIn && !farmer) {
@@ -119,6 +122,8 @@ export default function App() {
             active={getActiveScreenName()}
             onNavigate={(screen) => setCurrentView(screen as MainView)}
             farmer={farmer}
+            currentLang={currentLang}
+            onSelectLanguage={setCurrentLang}
           />
 
           {/* Quick link back to Homepage */}
@@ -128,10 +133,10 @@ export default function App() {
                 onClick={() => { setCurrentView('home'); setActiveSection('home'); }}
                 className="rounded-lg px-3 py-1 transition-colors text-leaf-700 hover:bg-leaf-50 flex items-center gap-1 font-bold border border-leaf-200"
               >
-                ← Return to Moolya Homepage
+                {t.portalReturn}
               </button>
               <span className="text-gray-500 font-medium">
-                Farmer Workspace Portal
+                {t.portalTitle}
               </span>
             </div>
           </div>
@@ -164,7 +169,7 @@ export default function App() {
 
         {/* FARMER PRODUCE / DASHBOARD / MARKETPLACE VIEW */}
         {(currentView === 'produce' || currentView === 'dashboard' || currentView === 'marketplace') && (
-          <ProduceScreen onViewMatches={handleViewMatches} />
+          <ProduceScreen onViewMatches={handleViewMatches} currentLang={currentLang} />
         )}
 
         {/* MATCHES VIEW */}
@@ -172,21 +177,22 @@ export default function App() {
           <MatchesScreen
             produceId={selectedProduceId}
             onBack={() => setCurrentView('produce')}
+            currentLang={currentLang}
           />
         )}
 
         {/* ORDERS VIEW */}
-        {currentView === 'orders' && <OrdersScreen />}
+        {currentView === 'orders' && <OrdersScreen currentLang={currentLang} />}
 
         {/* PAYMENTS VIEW */}
-        {currentView === 'payments' && <PaymentsScreen />}
+        {currentView === 'payments' && <PaymentsScreen currentLang={currentLang} />}
 
         {/* REVIEWS VIEW */}
-        {currentView === 'reviews' && <ReviewsScreen />}
+        {currentView === 'reviews' && <ReviewsScreen currentLang={currentLang} />}
 
         {/* PROFILE VIEW */}
         {currentView === 'profile' && (
-          <ProfileScreen onLogout={handleLogout} />
+          <ProfileScreen onLogout={handleLogout} currentLang={currentLang} />
         )}
 
         {/* LOGIN SCREEN */}

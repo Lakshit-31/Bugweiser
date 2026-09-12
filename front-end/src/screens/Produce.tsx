@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Plus, MapPin, Calendar, Package, IndianRupee, Loader2, Sprout, X, TrendingUp } from 'lucide-react';
-import type { Produce } from '@/types';
+import type { Produce, LanguageCode } from '@/types';
 import { getProduce, addProduce } from '@/data/api';
 import StatusPill from '@/components/StatusPill';
 import EmptyState from '@/components/EmptyState';
+import { getCropImage } from '@/data/cropImages';
+import { translations } from '@/data/translations';
 
 interface ProduceScreenProps {
   onViewMatches: (produceId: string) => void;
+  currentLang: LanguageCode;
 }
 
 const qualityColors: Record<string, string> = {
@@ -15,58 +18,9 @@ const qualityColors: Record<string, string> = {
   C: 'bg-rust-50 text-rust-500 border-rust-100',
 };
 
-/**
- * Dynamic crop image mapping helper.
- * Safely maps crop names dynamically using keyword matching so any crop
- * gets a matching real image, or returns null for fallback icon without throwing errors.
- */
-function getCropImage(cropName?: string, itemImage?: string): string | null {
-  if (itemImage) return itemImage;
-  if (!cropName) return null;
 
-  const lower = String(cropName).toLowerCase();
-
-  if (lower.includes('wheat') || lower.includes('gehun') || lower.includes('गेहूं') || lower.includes('<ctrl42>ਕਣਕ')) {
-    return 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('tomato') || lower.includes('tamatar') || lower.includes('टमाटर') || lower.includes('ਟਮਾਟਰ')) {
-    return 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('onion') || lower.includes('pyaz') || lower.includes('प्याज') || lower.includes('ਪਿਆਜ਼')) {
-    return 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('rice') || lower.includes('basmati') || lower.includes('paddy') || lower.includes('चावल') || lower.includes('ਚੌਲ')) {
-    return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('mustard') || lower.includes('sarson') || lower.includes('सरसों') || lower.includes('ਸਰੋਂ')) {
-    return 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('cotton') || lower.includes('kapas') || lower.includes('कपास') || lower.includes('ਕਪਾਹ')) {
-    return 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('sugarcane') || lower.includes('ganna') || lower.includes('गन्ना') || lower.includes('ਗੰਨਾ')) {
-    return 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('cumin') || lower.includes('jeera') || lower.includes('जीरा')) {
-    return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('gram') || lower.includes('chana') || lower.includes('chickpea') || lower.includes('चना')) {
-    return 'https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('bajra') || lower.includes('millet') || lower.includes('pearl') || lower.includes('बाजरा')) {
-    return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('potato') || lower.includes('aalu') || lower.includes('आलू')) {
-    return 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=800&q=80';
-  }
-  if (lower.includes('soybean') || lower.includes('soya') || lower.includes('सोयाबीन')) {
-    return 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=800&q=80';
-  }
-
-  return null;
-}
-
-export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
+export default function ProduceScreen({ onViewMatches, currentLang }: ProduceScreenProps) {
+  const t = translations[currentLang] || translations.en;
   const [produce, setProduce] = useState<Produce[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -95,11 +49,11 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
       {/* Page header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-ink">My Produce</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your crop listings and find buyers.</p>
+          <h1 className="font-serif text-2xl font-semibold text-ink">{t.produceTitle}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t.produceSub}</p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn-primary shrink-0">
-          <Plus size={16} /> List new produce
+          <Plus size={16} /> {t.listNewProduce}
         </button>
       </div>
 
@@ -110,11 +64,11 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
       ) : !produce || produce.length === 0 ? (
         <EmptyState
           icon={<Sprout size={28} />}
-          title="No produce listed yet"
-          description="Tap 'List new produce' to add your first crop — buyers will be matched to you automatically."
+          title={t.noProduceTitle}
+          description={t.noProduceSub}
           action={
             <button onClick={() => setShowForm(true)} className="btn-primary">
-              <Plus size={16} /> List new produce
+              <Plus size={16} /> {t.listNewProduce}
             </button>
           }
         />
@@ -178,7 +132,7 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
                           {item.cropName || 'Unnamed Crop'}
                         </h3>
                         <span className={`mt-1.5 inline-block rounded-md border px-2 py-0.5 text-xs font-semibold ${qualityStyle}`}>
-                          Grade {item.quality || 'A'}
+                          {t.gradeLabel} {item.quality || 'A'}
                         </span>
                       </div>
                     </div>
@@ -186,29 +140,29 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
                     {/* Location */}
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                       <MapPin size={14} className="text-leaf-500 shrink-0" />
-                      <span className="truncate">{item.location || 'Location Not Specified'}</span>
+                      <span className="truncate">{item.location || t.locationNotSpecified}</span>
                     </div>
 
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs bg-paper p-3 rounded-xl border border-leaf-100">
                       <div>
-                        <span className="text-gray-400 font-medium">Quantity</span>
+                        <span className="text-gray-400 font-medium">{t.qty}</span>
                         <p className="font-bold text-ink text-sm mt-0.5">
                           {typeof item.quantity === 'number' ? item.quantity.toLocaleString('en-IN') : item.quantity} {item.unit || 'kg'}
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-400 font-medium">Expected Price</span>
+                        <span className="text-gray-400 font-medium">{t.expectedPrice}</span>
                         <p className="font-bold text-leaf-600 text-sm mt-0.5">₹{item.expectedPrice}/{item.unit || 'kg'}</p>
                       </div>
                       <div>
-                        <span className="text-gray-400 font-medium">Available</span>
+                        <span className="text-gray-400 font-medium">{t.availableLabel}</span>
                         <p className="font-bold text-ink mt-0.5">
                           {typeof item.availableQuantity === 'number' ? item.availableQuantity.toLocaleString('en-IN') : item.availableQuantity} {item.unit || 'kg'}
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-400 font-medium">Harvest Date</span>
+                        <span className="text-gray-400 font-medium">{t.harvestDateLabel}</span>
                         <p className="font-bold text-ink mt-0.5">
                           {formattedHarvestDate}
                         </p>
@@ -222,9 +176,9 @@ export default function ProduceScreen({ onViewMatches }: ProduceScreenProps) {
                   <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs font-bold text-leaf-600 group-hover:text-leaf-700">
                     <span className="flex items-center gap-1.5">
                       <TrendingUp size={15} />
-                      View buyer matches
+                      {t.viewBuyerMatches}
                     </span>
-                    <span className="text-[11px] font-semibold text-gray-400">Match score available →</span>
+                    <span className="text-[11px] font-semibold text-gray-400">{t.matchScoreAvailable}</span>
                   </div>
                 </div>
               </button>

@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Loader2, Calendar, Star } from 'lucide-react';
-import type { Review } from '@/types';
+import type { Review, LanguageCode } from '@/types';
 import { getReviews } from '@/data/api';
 import StarRating from '@/components/StarRating';
 import EmptyState from '@/components/EmptyState';
+import { translations } from '@/data/translations';
 
-export default function ReviewsScreen() {
+interface ReviewsScreenProps {
+  currentLang: LanguageCode;
+}
+
+export default function ReviewsScreen({ currentLang }: ReviewsScreenProps) {
+  const t = translations[currentLang] || translations.en;
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,8 +29,8 @@ export default function ReviewsScreen() {
   return (
     <div className="animate-fade-in">
       <div className="mb-6">
-        <h1 className="font-serif text-2xl font-semibold text-ink">Reviews</h1>
-        <p className="mt-1 text-sm text-gray-500">Reviews you've left for buyers after completed orders.</p>
+        <h1 className="font-serif text-2xl font-semibold text-ink">{t.reviewsTitle}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t.reviewsSub}</p>
       </div>
 
       {loading ? (
@@ -34,8 +40,8 @@ export default function ReviewsScreen() {
       ) : reviews.length === 0 ? (
         <EmptyState
           icon={<MessageSquare size={28} />}
-          title="No reviews yet"
-          description="After completing an order, share your experience with the buyer. Your reviews help other farmers choose trustworthy buyers."
+          title={t.noReviewsTitle}
+          description={t.noReviewsSub}
         />
       ) : (
         <>
@@ -46,7 +52,7 @@ export default function ReviewsScreen() {
             </div>
             <div>
               <p className="font-serif text-2xl font-bold text-leaf-700">{avgRating} / 5</p>
-              <p className="text-sm text-leaf-600">Average rating across {reviews.length} review{reviews.length !== 1 && 's'}</p>
+              <p className="text-sm text-leaf-600">{t.avgRatingLabel} {reviews.length} review{reviews.length !== 1 && 's'}</p>
             </div>
           </div>
 

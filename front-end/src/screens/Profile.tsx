@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { User, MapPin, Sprout, LogOut, Loader2, Check, Plus, X, Phone } from 'lucide-react';
-import type { Farmer } from '@/types';
+import type { Farmer, LanguageCode } from '@/types';
 import { getFarmer, updateFarmer } from '@/data/api';
+import { translations } from '@/data/translations';
 
 interface ProfileScreenProps {
   onLogout: () => void;
+  currentLang: LanguageCode;
 }
 
-export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
+export default function ProfileScreen({ onLogout, currentLang }: ProfileScreenProps) {
+  const t = translations[currentLang] || translations.en;
   const [farmer, setFarmer] = useState<Farmer | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -60,12 +63,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
     <div className="animate-fade-in mx-auto max-w-2xl">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-ink">My Profile</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your farm details and account information.</p>
+          <h1 className="font-serif text-2xl font-semibold text-ink">{t.myProfileTitle}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t.profileSub}</p>
         </div>
         {!editing && (
           <button onClick={() => setEditing(true)} className="btn-ghost shrink-0">
-            Edit Profile
+            {t.editProfileBtn}
           </button>
         )}
       </div>
@@ -91,7 +94,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
       <div className="space-y-5 rounded-2xl border border-black/5 bg-white p-6 shadow-[0_1px_3px_rgba(30,43,31,0.06)]">
         {/* Name */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-500">Full Name</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.fullNameLabel}</label>
           {editing ? (
             <input
               value={form.name}
@@ -105,7 +108,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         {/* Phone */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-500">Phone Number</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.phoneLabel}</label>
           {editing ? (
             <input
               value={form.phone}
@@ -120,7 +123,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         {/* Location */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-500">Village</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.villageLabel}</label>
             {editing ? (
               <input
                 value={form.village}
@@ -132,7 +135,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             )}
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-500">District</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.districtLabel}</label>
             {editing ? (
               <input
                 value={form.district}
@@ -144,7 +147,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
             )}
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-500">State</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.stateLabel}</label>
             {editing ? (
               <input
                 value={form.state}
@@ -159,7 +162,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         {/* Farm location */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-500">Farm Location</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.farmLocationLabel}</label>
           {editing ? (
             <input
               value={form.farmLocation}
@@ -176,7 +179,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         {/* Farm size */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-500">Farm Size</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.farmSizeLabel}</label>
           {editing ? (
             <input
               value={form.farmSize}
@@ -193,7 +196,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
         {/* Crops grown */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-500">Crops Grown</label>
+          <label className="mb-1.5 block text-sm font-medium text-gray-500">{t.cropsGrownLabel}</label>
           <div className="flex flex-wrap gap-2">
             {form.cropsGrown.map((crop) => (
               <span
@@ -231,7 +234,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
         {editing ? (
           <>
             <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <>Save Changes</>}
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <>{t.saveChangesBtn}</>}
             </button>
             <button
               onClick={() => {
@@ -240,12 +243,12 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
               }}
               className="btn-ghost flex-1"
             >
-              Cancel
+              {t.cancel}
             </button>
           </>
         ) : (
           <button onClick={onLogout} className="flex w-full items-center justify-center gap-2 rounded-xl border border-rust-200 bg-rust-50 px-5 py-2.5 text-sm font-semibold text-rust-500 transition-all hover:bg-rust-100">
-            <LogOut size={16} /> Log Out
+            <LogOut size={16} /> {t.logout}
           </button>
         )}
       </div>
@@ -254,7 +257,7 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
       {saved && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 animate-slide-up rounded-xl bg-leaf-500 px-5 py-3 text-sm font-medium text-paper shadow-lg">
           <span className="flex items-center gap-2">
-            <Check size={16} /> Profile saved successfully
+            <Check size={16} /> {t.profileSavedMsg}
           </span>
         </div>
       )}

@@ -31,6 +31,7 @@ import { featuredProduceListings, mockTestimonialsData } from '@/data/mockListin
 import NetEarningsCalculator from '@/components/NetEarningsCalculator';
 import ProduceDetailModal from '@/components/ProduceDetailModal';
 import MatchScoreRing from '@/components/MatchScoreRing';
+import { getCropImage } from '@/data/cropImages';
 
 interface HomepageProps {
   currentLang: LanguageCode;
@@ -392,20 +393,33 @@ export default function Homepage({
 
         {/* Listings Card Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredListings.map((item) => (
-            <div
-              key={item.id}
-              className="card group flex flex-col justify-between overflow-hidden p-0 transition-all hover:scale-[1.01] hover:border-leaf-300 hover:shadow-lg"
-            >
-              <div>
-                {/* Image + Match Score Header */}
-                <div className="relative h-44 w-full overflow-hidden bg-gray-100">
-                  <img
-                    src={item.image}
-                    alt={item.cropName}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {filteredListings.map((item) => {
+            const cropImageUrl = getCropImage(item.cropName, item.image);
+            return (
+              <div
+                key={item.id}
+                className="card group flex flex-col justify-between overflow-hidden p-0 transition-all hover:scale-[1.01] hover:border-leaf-300 hover:shadow-lg"
+              >
+                <div>
+                  {/* Image + Match Score Header */}
+                  <div className="relative h-44 w-full overflow-hidden bg-leaf-50/60 flex items-center justify-center border-b border-black/5">
+                    {cropImageUrl ? (
+                      <img
+                        src={cropImageUrl}
+                        alt={item.cropName}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-leaf-600 gap-1.5 p-4 text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-leaf-100/80 text-leaf-700">
+                          <Sprout size={28} />
+                        </div>
+                        <span className="text-[11px] font-bold text-leaf-700 uppercase tracking-wider">
+                          Agricultural Produce
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                   
                   {/* Category Pill */}
                   <span className="absolute top-3 left-3 rounded-lg bg-white/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-leaf-800 shadow-xs">
@@ -413,9 +427,9 @@ export default function Homepage({
                   </span>
 
                   {/* Match Score Badge */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-leaf-600 text-white px-2.5 py-1 text-[11px] font-bold shadow-md border border-white/20">
-                    <Sparkles size={12} className="text-marigold-300" />
-                    <span>{item.matchScore}/100</span>
+                  <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/95 text-gray-900 px-2.5 py-1 text-[11px] font-extrabold shadow-md border border-leaf-200">
+                    <Sparkles size={12} className="text-leaf-700" />
+                    <span className="text-gray-900">{item.matchScore}/100</span>
                   </div>
 
                   {/* Location Overlay */}
@@ -475,7 +489,8 @@ export default function Homepage({
                 </button>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
 
         {/* View All Marketplace Banner Button */}
@@ -544,7 +559,7 @@ export default function Homepage({
               <span className="flex items-center gap-1">
                 <ShieldCheck size={14} className="text-marigold-300" /> Payment Guarantee
               </span>
-              <span className="font-bold text-white">Score 94/100</span>
+              <span className="rounded-md bg-white/95 px-2.5 py-0.5 font-extrabold text-gray-900 shadow-xs border border-white/30">Score 94/100</span>
             </div>
           </div>
 
