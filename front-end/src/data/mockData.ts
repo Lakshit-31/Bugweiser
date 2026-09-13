@@ -440,9 +440,9 @@ export const mockReviews: Review[] = [
 // --- Admin & multi-role data ---
 
 export const mockAdminUser = {
-  name: 'SIH Admin',
+  name: 'Moolya Admin',
   phone: '9000000000',
-  email: 'admin@kisansathi.in',
+  email: 'admin@moolya.in',
   role: 'admin' as const,
 };
 
