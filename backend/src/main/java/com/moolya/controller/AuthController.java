@@ -1,0 +1,37 @@
+package com.moolya.controller;
+
+import com.moolya.dto.*;
+import com.moolya.service.AuthService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/auth")
+@CrossOrigin(origins = "*")
+public class AuthController {
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/register-farmer")
+    public ResponseEntity<AuthResponse> registerFarmer(@Valid @RequestBody RegisterFarmerRequest request) {
+        AuthResponse response = authService.registerFarmer(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register-buyer")
+    public ResponseEntity<AuthResponse> registerBuyer(@Valid @RequestBody RegisterBuyerRequest request) {
+        AuthResponse response = authService.registerBuyer(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+}
