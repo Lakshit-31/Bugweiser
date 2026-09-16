@@ -20,15 +20,18 @@ public class ProduceService {
     private final UserRepository userRepository;
     private final GradingService gradingService;
     private final MatchScoreService matchScoreService;
+    private final NotificationService notificationService;
 
     public ProduceService(ProduceListingRepository produceListingRepository,
                           UserRepository userRepository,
                           GradingService gradingService,
-                          MatchScoreService matchScoreService) {
+                          MatchScoreService matchScoreService,
+                          NotificationService notificationService) {
         this.produceListingRepository = produceListingRepository;
         this.userRepository = userRepository;
         this.gradingService = gradingService;
         this.matchScoreService = matchScoreService;
+        this.notificationService = notificationService;
     }
 
     public ProduceListing createVoiceListing(VoiceListingRequest req) {
@@ -43,16 +46,33 @@ public class ProduceService {
 
         ProduceListing listing = new ProduceListing();
         listing.setFarmerId(req.getFarmerId());
-        listing.setFarmerName(farmer != null ? farmer.getFullName() : "Ramesh Kumar");
-        listing.setFarmerPhone(farmer != null ? farmer.getPhone() : "9876543210");
+        listing.setFarmerName(farmer != null ? farmer.getFullName() : "Verified Farmer");
+        listing.setFarmerPhone(farmer != null ? farmer.getPhone() : "");
         listing.setCropName(req.getCropName());
-        listing.setQuantityQuintals(req.getQuantityQuintals());
+        
+        String unit = req.getUnit() != null ? req.getUnit() : "QUINTAL";
+        Double displayQty = req.getDisplayQuantity() != null ? req.getDisplayQuantity() : req.getQuantityQuintals();
+        Double qtyQuintals = "KG".equalsIgnoreCase(unit) ? (displayQty != null ? displayQty / 100.0 : req.getQuantityQuintals()) : (displayQty != null ? displayQty : req.getQuantityQuintals());
+
+        listing.setUnit(unit);
+        listing.setDisplayQuantity(displayQty != null ? displayQty : qtyQuintals);
+        listing.setQuantityQuintals(qtyQuintals);
         listing.setPricePerQuintal(req.getPricePerQuintal());
         listing.setPesticidesUsed(req.getPesticidesUsed());
-        listing.setHarvestDate(req.getHarvestDate() != null ? req.getHarvestDate() : LocalDateNowStr());
+
+        String cleanHarvestDate = LocalDateNowStr();
+        if (req.getHarvestDate() != null && !req.getHarvestDate().trim().isEmpty()) {
+            java.time.LocalDate parsedDate = GradingService.parseDateFlexible(req.getHarvestDate());
+            if (parsedDate != null) {
+                cleanHarvestDate = parsedDate.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            } else {
+                cleanHarvestDate = req.getHarvestDate().trim();
+            }
+        }
+        listing.setHarvestDate(cleanHarvestDate);
 
         // Automatic Grade Assignment Engine
-        Grade assignedGrade = gradingService.calculateGrade(req.getPesticidesUsed(), req.getHarvestDate());
+        Grade assignedGrade = gradingService.calculateGrade(req.getPesticidesUsed(), cleanHarvestDate);
         listing.setAssignedGrade(assignedGrade);
 
         listing.setImageUrls(req.getImageUrls());
@@ -71,7 +91,9 @@ public class ProduceService {
         listing.setLocation(loc);
         listing.setCreatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
 
-        return produceListingRepository.save(listing);
+        ProduceListing saved = produceListingRepository.save(listing);
+        notificationService.sendProduceListingCreatedNotification(saved);
+        return saved;
     }
 
     public List<ProduceSearchResponse> searchProduce(String cropName, Grade grade, String buyerId) {
@@ -107,6 +129,11 @@ public class ProduceService {
     public ProduceListing getListingById(String id) {
         return produceListingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produce listing not found with ID: " + id));
+    }
+
+    public void deleteListing(String id) {
+        ProduceListing listing = getListingById(id);
+        produceListingRepository.delete(listing);
     }
 
     private String LocalDateNowStr() {

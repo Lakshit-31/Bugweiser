@@ -13,6 +13,8 @@ public class DealReplyDto {
 
     private String farmerVoiceNote;
 
+    private String delayReason;
+
     public DealReplyDto() {}
 
     public String getOrderId() { return orderId; }
@@ -26,4 +28,7 @@ public class DealReplyDto {
 
     public String getFarmerVoiceNote() { return farmerVoiceNote; }
     public void setFarmerVoiceNote(String farmerVoiceNote) { this.farmerVoiceNote = farmerVoiceNote; }
+
+    public String getDelayReason() { return delayReason; }
+    public void setDelayReason(String delayReason) { this.delayReason = delayReason; }
 }

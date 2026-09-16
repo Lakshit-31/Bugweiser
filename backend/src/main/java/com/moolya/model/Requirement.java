@@ -14,6 +14,8 @@ public class Requirement {
     
     private String cropName;
     private Double quantityQuintals;
+    private String unit = "QUINTAL";
+    private Double displayQuantity;
     private String desiredGrade;
     private Location location;
     private String rawVoicePrompt;
@@ -38,6 +40,12 @@ public class Requirement {
 
     public Double getQuantityQuintals() { return quantityQuintals; }
     public void setQuantityQuintals(Double quantityQuintals) { this.quantityQuintals = quantityQuintals; }
+
+    public String getUnit() { return unit != null ? unit : "QUINTAL"; }
+    public void setUnit(String unit) { this.unit = unit; }
+
+    public Double getDisplayQuantity() { return displayQuantity != null ? displayQuantity : quantityQuintals; }
+    public void setDisplayQuantity(Double displayQuantity) { this.displayQuantity = displayQuantity; }
 
     public String getDesiredGrade() { return desiredGrade; }
     public void setDesiredGrade(String desiredGrade) { this.desiredGrade = desiredGrade; }

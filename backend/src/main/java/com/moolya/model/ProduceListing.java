@@ -18,9 +18,11 @@ public class ProduceListing {
     private String cropName;
     private Double quantityQuintals;
     private Double pricePerQuintal;
+    private String unit = "QUINTAL"; // QUINTAL or KG
+    private Double displayQuantity;
     private String pesticidesUsed;
     private String harvestDate;
-    
+
     private Grade assignedGrade;
     private List<String> imageUrls = new ArrayList<>();
     private ListingStatus status = ListingStatus.AVAILABLE;
@@ -50,6 +52,12 @@ public class ProduceListing {
 
     public Double getPricePerQuintal() { return pricePerQuintal; }
     public void setPricePerQuintal(Double pricePerQuintal) { this.pricePerQuintal = pricePerQuintal; }
+
+    public String getUnit() { return unit != null ? unit : "QUINTAL"; }
+    public void setUnit(String unit) { this.unit = unit; }
+
+    public Double getDisplayQuantity() { return displayQuantity != null ? displayQuantity : quantityQuintals; }
+    public void setDisplayQuantity(Double displayQuantity) { this.displayQuantity = displayQuantity; }
 
     public String getPesticidesUsed() { return pesticidesUsed; }
     public void setPesticidesUsed(String pesticidesUsed) { this.pesticidesUsed = pesticidesUsed; }

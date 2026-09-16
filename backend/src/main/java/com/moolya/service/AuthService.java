@@ -86,15 +86,22 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest req) {
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
-        );
+        String identifier = req.getUsername() != null ? req.getUsername().trim() : "";
+        String rawPassword = req.getPassword() != null ? req.getPassword().trim() : "";
 
-        String token = tokenProvider.generateToken(auth);
-        User user = userRepository.findByPhone(req.getUsername())
-                .orElseGet(() -> userRepository.findByEmail(req.getUsername())
-                        .orElseThrow(() -> new RuntimeException("User not found")));
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(identifier, rawPassword)
+            );
 
-        return new AuthResponse(token, user);
+            String token = tokenProvider.generateToken(auth);
+            User user = userRepository.findByPhone(identifier)
+                    .orElseGet(() -> userRepository.findByEmail(identifier)
+                            .orElseThrow(() -> new RuntimeException("User not found: " + identifier)));
+
+            return new AuthResponse(token, user);
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            throw new IllegalArgumentException("गलत फोन नंबर या पासवर्ड! कृपया सही विवरण दर्ज करें। (Bad Credentials: Invalid phone or password).");
+        }
     }
 }

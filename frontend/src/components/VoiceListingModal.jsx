@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useWebSocket } from '../context/WebSocketContext';
 import { speakText, createSpeechRecognizer } from '../services/voiceService';
-import { Mic, MicOff, Volume2, Upload, CheckCircle2, AlertCircle, X, Sparkles, ImagePlus, RefreshCw, VolumeX, Play } from 'lucide-react';
+import { parseQuantityOrPrice, parseQuantityAndUnit, parseSpokenDate } from '../utils/voiceParser';
+import { Mic, MicOff, Volume2, Upload, CheckCircle2, AlertCircle, X, Sparkles, ImagePlus, RefreshCw, VolumeX, Play, Lock } from 'lucide-react';
 import axios from 'axios';
 
 const questions = [
@@ -14,17 +16,10 @@ const questions = [
   { id: 'pricePerQuintal', key: 'voicePrompt6', hi: "आपका अपेक्षित मूल्य कितना रुपया प्रति क्विंटल है?", en: "What is your expected price per Quintal?", placeholder: "e.g., 2200" },
 ];
 
-const samplePhotoPresets = [
-  "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600",
-  "https://images.unsplash.com/photo-1535242208474-9a279b23b514?w=600",
-  "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
-  "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600",
-  "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600"
-];
-
-export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
+export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreated }) => {
   const { lang, t } = useLanguage();
   const { user } = useAuth();
+  const { triggerRefresh } = useWebSocket();
 
   const [step, setStep] = useState(0);
   const [isListening, setIsListening] = useState(false);
@@ -36,6 +31,8 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
   const [formData, setFormData] = useState({
     cropName: '',
     quantityQuintals: '',
+    unit: 'QUINTAL',
+    displayQuantity: '',
     district: user?.location?.district || 'Ludhiana',
     state: user?.location?.state || 'Punjab',
     harvestDate: new Date().toISOString().split('T')[0],
@@ -49,7 +46,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || !user) {
       window.speechSynthesis.cancel();
       setHasStartedVoice(false);
     } else {
@@ -57,7 +54,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
       setErrorMsg('');
       setVoiceLang(lang);
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   useEffect(() => {
     const pest = (formData.pesticidesUsed || '').toLowerCase();
@@ -72,6 +69,14 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
 
   // Initial gesture trigger to start audio synthesis cleanly
   const handleStartSystemVoice = () => {
+    if (!user) {
+      window.speechSynthesis.cancel();
+      if (onOpenAuth) {
+        onClose();
+        onOpenAuth();
+      }
+      return;
+    }
     setHasStartedVoice(true);
     const greeting = voiceLang === 'hi' 
       ? "नमस्ते किसान भाई, मैं आपका मूल्य एआई वॉइस असिस्टेंट हूँ। चलिए फसल की जानकारी दर्ज करते हैं।" 
@@ -85,10 +90,14 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
   };
 
   const startConversationalStep = (stepIndex) => {
+    if (!user) {
+      window.speechSynthesis.cancel();
+      return;
+    }
     if (stepIndex >= questions.length) {
       const endText = voiceLang === 'hi' 
-        ? "धन्यवाद! सभी प्रश्न पूरे हो गए हैं। कृपया 4 तस्वीरें जोड़कर लिस्टिंग सबमिट करें।"
-        : "Thank you! All questions completed. Please add photos to submit listing.";
+        ? "आगे बढ़ने के लिए अपनी फसल या प्रोडक्ट की फोटो अपलोड करें।"
+        : "To proceed further, please upload photos of your crop or product.";
       speakText(endText, voiceLang);
       return;
     }
@@ -109,15 +118,52 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
   };
 
   const activateMicForCurrentStep = (stepIndex) => {
+    if (!user) {
+      window.speechSynthesis.cancel();
+      if (onOpenAuth) {
+        onClose();
+        onOpenAuth();
+      }
+      return;
+    }
     const q = questions[stepIndex];
     setIsListening(true);
 
     const recognizer = createSpeechRecognizer(
       (transcript) => {
         setIsListening(false);
-        setFormData(prev => ({ ...prev, [q.id]: transcript }));
+        let parsedVal = transcript;
+        let ackText = '';
 
-        const ackText = voiceLang === 'hi' ? `प्राप्त हुआ: ${transcript}` : `Recorded: ${transcript}`;
+        if (q.id === 'quantityQuintals') {
+          const parsed = parseQuantityAndUnit(transcript);
+          parsedVal = String(parsed.displayQuantity);
+          const unitText = parsed.unit === 'KG' ? (voiceLang === 'hi' ? 'किलो (Kg)' : 'Kg') : (voiceLang === 'hi' ? 'क्विंटल' : 'Quintals');
+          ackText = voiceLang === 'hi'
+            ? `मात्रा दर्ज की गई: ${parsedVal} ${unitText}`
+            : `Recorded quantity: ${parsedVal} ${unitText}`;
+          setFormData(prev => ({
+            ...prev,
+            quantityQuintals: parsed.quantityQuintals,
+            displayQuantity: parsed.displayQuantity,
+            unit: parsed.unit
+          }));
+        } else if (q.id === 'pricePerQuintal') {
+          parsedVal = parseQuantityOrPrice(transcript);
+          ackText = voiceLang === 'hi'
+            ? `मूल्य दर्ज किया गया: ${parsedVal} रुपये प्रति क्विंटल`
+            : `Recorded price: ${parsedVal} Rupees per Quintal`;
+          setFormData(prev => ({ ...prev, [q.id]: parsedVal }));
+        } else if (q.id === 'harvestDate') {
+          parsedVal = parseSpokenDate(transcript);
+          ackText = voiceLang === 'hi'
+            ? `कटाई तारीख दर्ज की गई: ${parsedVal}`
+            : `Recorded harvest date: ${parsedVal}`;
+          setFormData(prev => ({ ...prev, [q.id]: parsedVal }));
+        } else {
+          ackText = voiceLang === 'hi' ? `प्राप्त हुआ: ${transcript}` : `Recorded: ${transcript}`;
+          setFormData(prev => ({ ...prev, [q.id]: parsedVal }));
+        }
         setIsSpeaking(true);
 
         speakText(ackText, voiceLang, () => {
@@ -146,11 +192,39 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
     }
   };
 
-  const handleAddSamplePhotos = () => {
-    setFormData(prev => ({
-      ...prev,
-      imageUrls: [...samplePhotoPresets]
-    }));
+  const [customUrl, setCustomUrl] = useState('');
+
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => {
+          if (prev.imageUrls.length >= 5) return prev;
+          return {
+            ...prev,
+            imageUrls: [...prev.imageUrls, reader.result]
+          };
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const handleAddUrl = () => {
+    if (!customUrl.trim()) return;
+    setFormData((prev) => {
+      if (prev.imageUrls.length >= 5) return prev;
+      return {
+        ...prev,
+        imageUrls: [...prev.imageUrls, customUrl.trim()]
+      };
+    });
+    setCustomUrl('');
   };
 
   const handleSubmit = async () => {
@@ -160,20 +234,31 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
       return;
     }
 
-    if (!formData.cropName || !formData.quantityQuintals || !formData.pricePerQuintal) {
+    const rawDispQty = formData.displayQuantity || formData.quantityQuintals;
+    const cleanedQty = parseQuantityOrPrice(rawDispQty);
+    const cleanedPrice = parseQuantityOrPrice(formData.pricePerQuintal);
+    const cleanedDate = parseSpokenDate(formData.harvestDate);
+
+    if (!formData.cropName || !cleanedQty || !cleanedPrice) {
       setErrorMsg('कृपया फसल का नाम, मात्रा और मूल्य भरें।');
       return;
     }
+
+    const numDisp = parseFloat(cleanedQty);
+    const selectedUnit = formData.unit || 'QUINTAL';
+    const qtyQuintals = selectedUnit === 'KG' ? numDisp / 100.0 : numDisp;
 
     setSubmitting(true);
     try {
       const payload = {
         farmerId: user?.id,
         cropName: formData.cropName,
-        quantityQuintals: parseFloat(formData.quantityQuintals),
-        pricePerQuintal: parseFloat(formData.pricePerQuintal),
+        quantityQuintals: qtyQuintals,
+        unit: selectedUnit,
+        displayQuantity: numDisp,
+        pricePerQuintal: parseFloat(cleanedPrice),
         pesticidesUsed: formData.pesticidesUsed,
-        harvestDate: formData.harvestDate,
+        harvestDate: cleanedDate,
         district: formData.district,
         state: formData.state,
         imageUrls: formData.imageUrls
@@ -181,7 +266,11 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
 
       const res = await axios.post('/api/v1/produce/create-voice', payload);
       setSubmitting(false);
-      speakText("आपकी फसल सफलतापूर्वक लिस्ट कर दी गई है।", voiceLang);
+      const successText = voiceLang === 'hi'
+        ? "आपकी सारी जानकारी दर्ज कर दी गई है।"
+        : "All your information has been registered successfully.";
+      speakText(successText, voiceLang);
+      triggerRefresh();
       if (onListingCreated) onListingCreated(res.data);
       onClose();
     } catch (err) {
@@ -196,10 +285,10 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
         
         {/* Header */}
-        <div className="bg-emerald-950 text-white p-5 flex justify-between items-center border-b border-emerald-800">
+        <div className="bg-emerald-950 text-white p-5 flex justify-between items-center border-b border-emerald-800 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="bg-amber-400 p-2.5 rounded-2xl text-emerald-950 shadow-inner">
               <Sparkles className="w-6 h-6" />
@@ -221,9 +310,32 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <div className="p-6 space-y-5 flex-1 overflow-y-auto">
           
-          {/* Audio Start Gesture Button */}
+          {!user ? (
+            <div className="bg-amber-50 border-2 border-amber-300 p-8 rounded-3xl text-center space-y-4 shadow-lg">
+              <div className="bg-amber-400 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center text-emerald-950 shadow-inner">
+                <Lock className="w-8 h-8 stroke-[2.5]" />
+              </div>
+              <h3 className="text-xl font-black text-emerald-950">लॉगिन अनिवार्य है (Login Required)</h3>
+              <p className="text-xs font-bold text-slate-600 max-w-md mx-auto">
+                एआई वॉइस असिस्टेंट का उपयोग करने और अपनी फसल सीधे लिस्ट करने के लिए कृपया पहले लॉगिन करें।
+                (Please log in or register first to use the AI Voice Assistant.)
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onOpenAuth) onOpenAuth();
+                }}
+                className="w-full py-3.5 bg-emerald-950 hover:bg-emerald-900 text-amber-300 font-black rounded-2xl text-sm shadow-xl flex items-center justify-center space-x-2 border border-amber-300/40"
+              >
+                <span>लॉगिन / रजिस्ट्रेशन करें (Log In / Register)</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Audio Start Gesture Button */}
           {!hasStartedVoice ? (
             <div className="bg-gradient-to-r from-amber-400 to-amber-500 p-6 rounded-3xl text-emerald-950 text-center space-y-3 shadow-lg border-2 border-amber-300 animate-pulse">
               <Volume2 className="w-12 h-12 mx-auto stroke-[2.5]" />
@@ -338,13 +450,49 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
 
           {/* Captured Input */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              रिकॉर्ड किया गया उत्तर (Spoken Value / Edit):
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-xs font-bold text-slate-700">
+                रिकॉर्ड किया गया उत्तर (Spoken Value / Edit):
+              </label>
+              {currentQ.id === 'quantityQuintals' && (
+                <div className="flex bg-slate-200 p-0.5 rounded-xl text-xs font-extrabold border border-slate-300">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, unit: 'QUINTAL' }))}
+                    className={`px-3 py-1 rounded-lg transition ${
+                      formData.unit === 'QUINTAL' ? 'bg-emerald-950 text-amber-300 shadow' : 'text-slate-700 hover:text-emerald-900'
+                    }`}
+                  >
+                    क्विंटल (Quintal)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, unit: 'KG' }))}
+                    className={`px-3 py-1 rounded-lg transition ${
+                      formData.unit === 'KG' ? 'bg-emerald-950 text-amber-300 shadow' : 'text-slate-700 hover:text-emerald-900'
+                    }`}
+                  >
+                    किलो (Kg)
+                  </button>
+                </div>
+              )}
+            </div>
             <input
-              type={currentQ.id === 'quantityQuintals' || currentQ.id === 'pricePerQuintal' ? 'number' : 'text'}
-              value={formData[currentQ.id] || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, [currentQ.id]: e.target.value }))}
+              type={currentQ.id === 'quantityQuintals' || currentQ.id === 'pricePerQuintal' ? 'number' : (currentQ.id === 'harvestDate' ? 'date' : 'text')}
+              value={currentQ.id === 'quantityQuintals' ? (formData.displayQuantity || formData.quantityQuintals || '') : (formData[currentQ.id] || '')}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (currentQ.id === 'quantityQuintals') {
+                  const num = parseFloat(val) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    displayQuantity: val,
+                    quantityQuintals: prev.unit === 'KG' ? num / 100.0 : num
+                  }));
+                } else {
+                  setFormData(prev => ({ ...prev, [currentQ.id]: val }));
+                }
+              }}
               placeholder={currentQ.placeholder}
               className="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 text-base font-semibold"
             />
@@ -372,6 +520,11 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
 
           {/* Mandatory Photos Upload */}
           <div className="border-t border-slate-200 pt-4 space-y-3">
+            <div className="bg-amber-50 border border-amber-300 p-3.5 rounded-2xl flex items-center space-x-2.5 text-xs font-black text-emerald-950 shadow-sm">
+              <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 animate-pulse" />
+              <span>📸 आगे बढ़ने के लिए अपनी फसल या प्रोडक्ट की फोटो अपलोड करें (Upload 4-5 photos to proceed)</span>
+            </div>
+
             <div className="flex justify-between items-center">
               <label className="text-sm font-extrabold text-slate-800 flex items-center space-x-1">
                 <Upload className="w-4 h-4 text-emerald-800" />
@@ -384,14 +537,39 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddSamplePhotos}
-              className="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-bold py-2.5 px-4 rounded-xl border border-emerald-300 flex items-center justify-center space-x-2 transition"
-            >
-              <ImagePlus className="w-4 h-4 text-emerald-700" />
-              <span>ऑटो 5 फसल तस्वीरें जोड़ें (Auto Add 5 Quality Crop Photos)</span>
-            </button>
+            <div className="space-y-2">
+              <label className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold py-2.5 px-4 rounded-xl border border-dashed border-emerald-400 flex items-center justify-center space-x-2 transition cursor-pointer">
+                <ImagePlus className="w-4 h-4 text-emerald-700" />
+                <span>तस्वीरें चुनें / डिवाइस से अपलोड करें (Choose / Upload Crop Photos)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={formData.imageUrls.length >= 5}
+                />
+              </label>
+
+              <div className="flex space-x-2">
+                <input
+                  type="url"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="या इमेज यूआरएल दर्ज करें (or paste image URL)"
+                  className="flex-1 text-xs border border-slate-300 rounded-xl px-3 py-2 outline-none focus:border-emerald-700"
+                  disabled={formData.imageUrls.length >= 5}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddUrl}
+                  disabled={!customUrl.trim() || formData.imageUrls.length >= 5}
+                  className="px-4 py-2 bg-emerald-800 text-amber-300 text-xs font-bold rounded-xl disabled:opacity-50"
+                >
+                  जोड़ें (Add)
+                </button>
+              </div>
+            </div>
 
             <div className="grid grid-cols-5 gap-2">
               {formData.imageUrls.map((img, idx) => (
@@ -418,11 +596,13 @@ export const VoiceListingModal = ({ isOpen, onClose, onListingCreated }) => {
               <span>{errorMsg}</span>
             </div>
           )}
+          </>
+          )}
 
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end space-x-3">
+        <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end space-x-3 flex-shrink-0">
           <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-bold text-slate-600">
             रद्द करें
           </button>

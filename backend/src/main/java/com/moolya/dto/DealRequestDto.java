@@ -11,6 +11,9 @@ public class DealRequestDto {
     private String buyerId;
 
     private Double quantityQuintals;
+    private String unit = "QUINTAL";
+    private Double displayQuantity;
+    private String requestedDeliveryDate;
 
     public DealRequestDto() {}
 
@@ -22,4 +25,13 @@ public class DealRequestDto {
 
     public Double getQuantityQuintals() { return quantityQuintals; }
     public void setQuantityQuintals(Double quantityQuintals) { this.quantityQuintals = quantityQuintals; }
+
+    public String getUnit() { return unit != null ? unit : "QUINTAL"; }
+    public void setUnit(String unit) { this.unit = unit; }
+
+    public Double getDisplayQuantity() { return displayQuantity; }
+    public void setDisplayQuantity(Double displayQuantity) { this.displayQuantity = displayQuantity; }
+
+    public String getRequestedDeliveryDate() { return requestedDeliveryDate; }
+    public void setRequestedDeliveryDate(String requestedDeliveryDate) { this.requestedDeliveryDate = requestedDeliveryDate; }
 }

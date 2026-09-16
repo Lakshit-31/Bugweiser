@@ -11,11 +11,14 @@ export const WebSocketProvider = ({ children }) => {
   const [dealNotification, setDealNotification] = useState(null);
   const [buyerNotification, setBuyerNotification] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const stompClientRef = useRef(null);
 
-  useEffect(() => {
-    if (!user) return;
+  const triggerRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
+  useEffect(() => {
     const socket = new SockJS('http://localhost:8080/ws-moolya');
     const stompClient = new Client({
       webSocketFactory: () => socket,
@@ -25,22 +28,46 @@ export const WebSocketProvider = ({ children }) => {
         setIsConnected(true);
         console.log('Connected to STOMP WebSocket');
 
-        if (user.role === 'ROLE_FARMER') {
+        // Subscribe to public produce updates for real-time listing refresh
+        stompClient.subscribe('/topic/produce-updates', () => {
+          triggerRefresh();
+        });
+
+        stompClient.subscribe('/topic/deals', (message) => {
+          triggerRefresh();
+          try {
+            if (message?.body) {
+              const payload = JSON.parse(message.body);
+              if (payload.type === 'PAYMENT_RECEIVED' && user?.role === 'ROLE_FARMER' && (!payload.farmerId || payload.farmerId === user.id)) {
+                setDealNotification(payload);
+                if (payload.spokenHindiText) {
+                  speakText(payload.spokenHindiText, 'hi');
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing /topic/deals message:', e);
+          }
+        });
+
+        if (user?.role === 'ROLE_FARMER') {
           // Subscribe to farmer deal topic
           stompClient.subscribe(`/topic/farmer-deals/${user.id}`, (message) => {
             const payload = JSON.parse(message.body);
             setDealNotification(payload);
+            triggerRefresh();
 
             // Trigger instant Hindi audio TTS notification
             if (payload.spokenHindiText) {
               speakText(payload.spokenHindiText, 'hi');
             }
           });
-        } else if (user.role === 'ROLE_BUYER') {
+        } else if (user?.role === 'ROLE_BUYER') {
           // Subscribe to buyer update topic
           stompClient.subscribe(`/topic/buyer-updates/${user.id}`, (message) => {
             const payload = JSON.parse(message.body);
             setBuyerNotification(payload);
+            triggerRefresh();
 
             if (payload.spokenHindiText) {
               speakText(payload.spokenHindiText, 'hi');
@@ -71,6 +98,8 @@ export const WebSocketProvider = ({ children }) => {
       isConnected,
       dealNotification,
       buyerNotification,
+      refreshKey,
+      triggerRefresh,
       clearDealNotification,
       clearBuyerNotification,
       stompClient: stompClientRef.current

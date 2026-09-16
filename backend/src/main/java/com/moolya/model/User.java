@@ -32,6 +32,17 @@ public class User {
     
     private Location location;
 
+    // Admin & Status Management Fields
+    private String accountStatus = "ACTIVE"; // ACTIVE, SUSPENDED
+    private String suspiciousStatus = "NORMAL"; // NORMAL, UNDER_REVIEW, SUSPICIOUS
+    private String suspiciousReason;
+    private String suspiciousDetectedAt;
+    private String suspensionReason;
+    private String adminNotes;
+
+    private String createdAt;
+    private String updatedAt;
+
     public User() {}
 
     public String getId() { return id; }
@@ -69,4 +80,28 @@ public class User {
 
     public Location getLocation() { return location; }
     public void setLocation(Location location) { this.location = location; }
+
+    public String getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(String accountStatus) { this.accountStatus = accountStatus; }
+
+    public String getSuspiciousStatus() { return suspiciousStatus; }
+    public void setSuspiciousStatus(String suspiciousStatus) { this.suspiciousStatus = suspiciousStatus; }
+
+    public String getSuspiciousReason() { return suspiciousReason; }
+    public void setSuspiciousReason(String suspiciousReason) { this.suspiciousReason = suspiciousReason; }
+
+    public String getSuspiciousDetectedAt() { return suspiciousDetectedAt; }
+    public void setSuspiciousDetectedAt(String suspiciousDetectedAt) { this.suspiciousDetectedAt = suspiciousDetectedAt; }
+
+    public String getSuspensionReason() { return suspensionReason; }
+    public void setSuspensionReason(String suspensionReason) { this.suspensionReason = suspensionReason; }
+
+    public String getAdminNotes() { return adminNotes; }
+    public void setAdminNotes(String adminNotes) { this.adminNotes = adminNotes; }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 }

@@ -12,6 +12,8 @@ public class Order {
     private String cropName;
     private Double quantityQuintals;
     private Double totalAmount;
+    private String unit = "QUINTAL"; // QUINTAL or KG
+    private Double displayQuantity;
     
     private String buyerId;
     private String buyerName;
@@ -22,9 +24,16 @@ public class Order {
     private String farmerPhone;
     
     private OrderStatus status = OrderStatus.REQUESTED;
+    private String requestedDeliveryDate;
     private String expectedDeliveryDate;
     private String farmerVoiceNote;
+    private String delayReason;
     
+    private String paymentStatus = "PENDING"; // PENDING, PAID
+    private String paymentMethod; // CARD, UPI
+    private String paymentTransactionId;
+    private String paidAt;
+
     private String createdAt;
     private String updatedAt;
 
@@ -44,6 +53,12 @@ public class Order {
 
     public Double getTotalAmount() { return totalAmount; }
     public void setTotalAmount(Double totalAmount) { this.totalAmount = totalAmount; }
+
+    public String getUnit() { return unit != null ? unit : "QUINTAL"; }
+    public void setUnit(String unit) { this.unit = unit; }
+
+    public Double getDisplayQuantity() { return displayQuantity != null ? displayQuantity : quantityQuintals; }
+    public void setDisplayQuantity(Double displayQuantity) { this.displayQuantity = displayQuantity; }
 
     public String getBuyerId() { return buyerId; }
     public void setBuyerId(String buyerId) { this.buyerId = buyerId; }
@@ -66,11 +81,29 @@ public class Order {
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }
 
+    public String getRequestedDeliveryDate() { return requestedDeliveryDate; }
+    public void setRequestedDeliveryDate(String requestedDeliveryDate) { this.requestedDeliveryDate = requestedDeliveryDate; }
+
     public String getExpectedDeliveryDate() { return expectedDeliveryDate; }
     public void setExpectedDeliveryDate(String expectedDeliveryDate) { this.expectedDeliveryDate = expectedDeliveryDate; }
 
     public String getFarmerVoiceNote() { return farmerVoiceNote; }
     public void setFarmerVoiceNote(String farmerVoiceNote) { this.farmerVoiceNote = farmerVoiceNote; }
+
+    public String getDelayReason() { return delayReason; }
+    public void setDelayReason(String delayReason) { this.delayReason = delayReason; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getPaymentTransactionId() { return paymentTransactionId; }
+    public void setPaymentTransactionId(String paymentTransactionId) { this.paymentTransactionId = paymentTransactionId; }
+
+    public String getPaidAt() { return paidAt; }
+    public void setPaidAt(String paidAt) { this.paidAt = paidAt; }
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }

@@ -48,4 +48,10 @@ public class ProduceController {
         ProduceListing listing = produceService.getListingById(id);
         return ResponseEntity.ok(listing);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteListing(@PathVariable String id) {
+        produceService.deleteListing(id);
+        return ResponseEntity.ok("Produce listing deleted successfully.");
+    }
 }
