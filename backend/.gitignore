@@ -1,0 +1,15 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### System & IDE Files ###
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+.factorypath
+*.log
+.DS_Store

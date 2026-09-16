@@ -19,7 +19,9 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/ws-moolya');
+    const rawBase = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    const wsUrl = rawBase.startsWith('http') ? `${rawBase}/ws-moolya` : 'http://localhost:8080/ws-moolya';
+    const socket = new SockJS(wsUrl);
     const stompClient = new Client({
       webSocketFactory: () => socket,
       debug: (str) => console.log('STOMP:', str),
