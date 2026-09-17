@@ -97,7 +97,7 @@ export const HomePage = ({ onSelectPortal, onOpenVoiceListing, onOpenAuth }) => 
 
           {/* Right Logo Banner Container (No Overlap) */}
           <div className="lg:col-span-4 flex justify-center lg:justify-end">
-            <div className="bg-white/95 p-4 rounded-3xl shadow-2xl border-2 border-amber-400/80 backdrop-blur-sm transform hover:scale-105 transition duration-300 max-w-xs sm:max-w-sm">
+            <div className="bg-white/95 p-4 rounded-3xl shadow-2xl border-2 border-amber-400/80 backdrop-blur-sm transform hover:scale-105 transition duration-300 w-full max-w-[280px] sm:max-w-xs shrink-0">
               <img src="/moolya-logo.jpg" alt="Moolya Official Logo" className="w-full h-auto object-contain rounded-2xl" />
             </div>
           </div>

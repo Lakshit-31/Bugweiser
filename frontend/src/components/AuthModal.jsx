@@ -161,8 +161,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="bg-emerald-950 text-white p-5 flex justify-between items-center flex-shrink-0 border-b border-emerald-900">
           <div className="flex items-center space-x-3">
-            <div className="bg-white p-1 rounded-2xl shadow border border-amber-400/60">
-              <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-8 w-auto object-contain rounded-xl" />
+            <div className="bg-white p-1 rounded-2xl shadow border border-amber-400/60 shrink-0">
+              <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-8 w-8 object-contain rounded-xl shrink-0" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-amber-300">

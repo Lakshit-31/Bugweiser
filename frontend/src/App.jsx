@@ -135,8 +135,8 @@ const AppContent = () => {
 
       {/* Footer */}
       <footer className="bg-emerald-950 text-emerald-300 py-6 border-t border-emerald-900 text-center text-xs space-y-2 flex flex-col items-center justify-center">
-        <div className="bg-white p-1 rounded-2xl shadow border border-amber-400/50 inline-block">
-          <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-auto object-contain rounded-xl" />
+        <div className="bg-white p-1 rounded-2xl shadow border border-amber-400/50 inline-block shrink-0">
+          <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-9 object-contain rounded-xl shrink-0" />
         </div>
         <p className="font-bold text-amber-300">मूल्य ({t('appName')}) - {t('tagline')}</p>
         <p>© 2026 {t('appName')} Platform. English • हिंदी • ਪੰਜਾਬੀ • मराठी • ગુજરાતી • தமிழ்</p>

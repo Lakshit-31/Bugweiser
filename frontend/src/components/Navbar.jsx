@@ -34,8 +34,8 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
               onClick={() => handleNavClick('top')}
               className="flex items-center space-x-2 text-left focus:outline-none group shrink-0"
             >
-              <div className="bg-white p-1 rounded-2xl shadow group-hover:scale-105 transition border border-amber-300/40">
-                <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-auto object-contain rounded-xl" />
+              <div className="bg-white p-1 rounded-2xl shadow group-hover:scale-105 transition border border-amber-300/40 shrink-0">
+                <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-9 object-contain rounded-xl shrink-0" />
               </div>
               <span className="text-2xl font-black tracking-tight text-amber-300 font-serif hidden sm:inline">
                 {t('appName')}

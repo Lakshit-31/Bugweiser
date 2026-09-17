@@ -57,8 +57,8 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-950 to-emerald-900 text-white p-6 flex justify-between items-center border-b border-emerald-800">
           <div className="flex items-center space-x-3">
-            <div className="bg-white p-1 rounded-2xl shadow-lg border border-amber-400">
-              <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-auto object-contain rounded-xl" />
+            <div className="bg-white p-1 rounded-2xl shadow-lg border border-amber-400 shrink-0">
+              <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-9 object-contain rounded-xl shrink-0" />
             </div>
             <div>
               <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
