@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Lock, Phone, Mail, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 
 export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
+  const { t } = useLanguage();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,7 +15,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!identifier || !password) {
-      setErrorMsg('कृपया फोन/ईमेल और पासवर्ड दर्ज करें।');
+      setErrorMsg('Please enter phone/email and password.');
       return;
     }
 
@@ -29,7 +31,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       const { token, user } = res.data;
 
       if (user?.role !== 'ROLE_ADMIN') {
-        setErrorMsg('अस्वीकृत: यह खाता एडमिन रोल के रूप में पंजीकृत नहीं है। (Access Denied: Not an Admin user).');
+        setErrorMsg('Access Denied: Not an Admin user.');
         setLoading(false);
         return;
       }
@@ -42,7 +44,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       onLoginSuccess(user, token);
       onClose();
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'लॉगिन विफल! कृपया अपने एडमिन विवरण की जांच करें।');
+      setErrorMsg(err.response?.data?.message || 'Login failed! Please check your admin credentials.');
     } finally {
       setLoading(false);
     }
@@ -60,10 +62,10 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
             </div>
             <div>
               <span className="text-[11px] font-black uppercase tracking-wider text-amber-300">
-                सुरक्षित प्रशासनिक पहुँच (Admin Portal)
+                {t('adminLoginHeader')}
               </span>
               <h3 className="text-xl font-extrabold text-white">
-                Moolya एडमिन लॉगिन
+                {t('adminLoginTitle')}
               </h3>
             </div>
           </div>
@@ -78,10 +80,10 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
           <div className="bg-amber-50 border border-amber-300 p-3 rounded-2xl text-xs font-bold text-amber-950 space-y-1">
             <div className="flex items-center space-x-1.5 text-amber-900 font-extrabold">
               <CheckCircle className="w-4 h-4 text-emerald-700" />
-              <span>केवल अधिकृत एडमिन लॉगिन (Strictly Admin Access Only)</span>
+              <span>{t('adminOnlyNotice')}</span>
             </div>
             <p className="text-[11px] text-amber-900 font-normal">
-              सार्वजनिक पंजीकरण उपलब्ध नहीं है। प्राथमिक डेटाबेस एडमिन से सुरक्षित लॉगिन करें।
+              {t('adminOnlyDesc')}
             </p>
           </div>
 
@@ -95,7 +97,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
           {/* Identifier Input */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700 uppercase">
-              एडमिन फोन नंबर या ईमेल (Phone / Email):
+              {t('adminPhoneEmailLabel')}
             </label>
             <div className="relative">
               <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
@@ -113,7 +115,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
           {/* Password Input */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700 uppercase">
-              एडमिन पासवर्ड (Password):
+              {t('adminPasswordLabel')}
             </label>
             <div className="relative">
               <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
@@ -135,7 +137,7 @@ export const AdminLoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
             className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-black text-base rounded-2xl shadow-xl transition flex items-center justify-center space-x-2 disabled:opacity-50"
           >
             <ShieldCheck className="w-5 h-5 stroke-[2.5]" />
-            <span>{loading ? 'सत्यापित हो रहा है...' : 'एडमिन पोर्टल में प्रवेश करें (Login)'}</span>
+            <span>{loading ? t('adminVerifying') : t('adminLoginBtn')}</span>
           </button>
 
         </form>

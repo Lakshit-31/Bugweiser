@@ -138,8 +138,8 @@ const AppContent = () => {
         <div className="bg-white p-1 rounded-2xl shadow border border-amber-400/50 inline-block">
           <img src="/moolya-logo.jpg" alt="Moolya Logo" className="h-9 w-auto object-contain rounded-xl" />
         </div>
-        <p className="font-bold text-amber-300">मूल्य (Moolya) - Direct Agricultural Produce & Voice AI Marketplace</p>
-        <p>© 2026 Moolya Platform. Priority Localization: Devanagari Hindi & English.</p>
+        <p className="font-bold text-amber-300">मूल्य ({t('appName')}) - {t('tagline')}</p>
+        <p>© 2026 {t('appName')} Platform. English • हिंदी • ਪੰਜਾਬੀ • मराठी • ગુજરાતી • தமிழ்</p>
       </footer>
 
     </div>

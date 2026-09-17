@@ -1,10 +1,10 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Sprout, Globe, LogOut, UserCheck, Home, Info, PhoneCall, HelpCircle, ShieldCheck } from 'lucide-react';
+import { Sprout, Globe, LogOut, UserCheck, Home, Info, PhoneCall, HelpCircle, ShieldCheck, ChevronDown } from 'lucide-react';
 
 export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPortal, adminUser, onAdminLogout }) => {
-  const { lang, toggleLanguage, t } = useLanguage();
+  const { lang, setLang, supportedLanguages, t } = useLanguage();
   const { user, logout } = useAuth();
 
   const handleNavClick = (sectionId) => {
@@ -29,7 +29,7 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
         <div className="flex justify-between items-center h-16">
           
           {/* Brand Logo & Main Nav Links */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4 sm:space-x-6">
             <button
               onClick={() => handleNavClick('top')}
               className="flex items-center space-x-2 text-left focus:outline-none group shrink-0"
@@ -51,7 +51,7 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
                 }`}
               >
                 <Home className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'गृह' : 'Home'}</span>
+                <span>{t('home')}</span>
               </button>
 
               <button
@@ -59,7 +59,7 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
                 className="px-3 py-2 rounded-xl text-xs font-extrabold text-emerald-200 hover:text-amber-300 hover:bg-emerald-900/40 transition flex items-center space-x-1.5"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'यह कैसे काम करता है' : 'How It Works'}</span>
+                <span>{t('howItWorks')}</span>
               </button>
 
               <button
@@ -67,7 +67,7 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
                 className="px-3 py-2 rounded-xl text-xs font-extrabold text-emerald-200 hover:text-amber-300 hover:bg-emerald-900/40 transition flex items-center space-x-1.5"
               >
                 <Info className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'हमारे बारे में' : 'About Us'}</span>
+                <span>{t('aboutUs')}</span>
               </button>
 
               <button
@@ -75,26 +75,34 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
                 className="px-3 py-2 rounded-xl text-xs font-extrabold text-emerald-200 hover:text-amber-300 hover:bg-emerald-900/40 transition flex items-center space-x-1.5"
               >
                 <PhoneCall className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'संपर्क करें' : 'Contact Us'}</span>
+                <span>{t('contactUs')}</span>
               </button>
             </nav>
           </div>
 
-          {/* Controls: Language Toggle & User Auth / Login & Registration */}
+          {/* Controls: Language Selector & User Auth / Login & Registration */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             
-            {/* Language Toggle Button */}
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center space-x-1.5 bg-emerald-900 hover:bg-emerald-800 text-amber-300 border border-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-sm"
-              title="Change Language / भाषा बदलें"
-            >
-              <Globe className="w-4 h-4 text-amber-400" />
-              <span>{lang === 'hi' ? 'हिंदी' : 'English'}</span>
-              <span className="text-[10px] bg-amber-400 text-emerald-950 px-1.5 py-0.5 rounded-full font-black">
-                {lang === 'hi' ? 'EN' : 'हिं'}
-              </span>
-            </button>
+            {/* Language Selector Dropdown */}
+            <div className="relative inline-flex items-center">
+              <div className="flex items-center space-x-1.5 bg-emerald-900 hover:bg-emerald-800 text-amber-300 border border-emerald-700 px-2.5 py-1.5 rounded-full text-xs font-bold transition shadow-sm">
+                <Globe className="w-4 h-4 text-amber-400 shrink-0" />
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  className="bg-transparent text-amber-300 font-bold text-xs focus:outline-none cursor-pointer pr-1 appearance-none border-none"
+                  aria-label="Change Language"
+                >
+                  <option value="en" className="bg-emerald-950 text-white font-medium">English</option>
+                  <option value="hi" className="bg-emerald-950 text-white font-medium">हिंदी</option>
+                  <option value="pa" className="bg-emerald-950 text-white font-medium">ਪੰਜਾਬੀ</option>
+                  <option value="mr" className="bg-emerald-950 text-white font-medium">मराठी</option>
+                  <option value="gu" className="bg-emerald-950 text-white font-medium">ગુજરાતી</option>
+                  <option value="ta" className="bg-emerald-950 text-white font-medium">தமிழ்</option>
+                </select>
+                <ChevronDown className="w-3 h-3 text-amber-400 pointer-events-none opacity-80" />
+              </div>
+            </div>
 
             {/* Authenticated State vs Login/Registration */}
             {adminUser ? (
@@ -104,14 +112,14 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
                   className="flex items-center space-x-1.5 bg-amber-400 hover:bg-amber-300 text-emerald-950 px-3 py-1.5 rounded-xl font-black text-xs shadow transition"
                 >
                   <ShieldCheck className="w-4 h-4 text-emerald-950" />
-                  <span>{lang === 'hi' ? 'एडमिन डैशबोर्ड' : 'Admin Dashboard'}</span>
+                  <span>{t('adminDashboard')}</span>
                 </button>
                 <button
                   onClick={onAdminLogout}
                   className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center space-x-1"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Exit Admin</span>
+                  <span>{t('exitAdmin')}</span>
                 </button>
               </div>
             ) : user ? (
@@ -142,7 +150,7 @@ export const Navbar = ({ onOpenAuth, onOpenAdminAuth, activePortal, onSelectPort
                 onClick={onOpenAuth}
                 className="bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold text-xs px-4 py-2 rounded-xl transition shadow"
               >
-                {lang === 'hi' ? 'लॉगिन / पंजीकरण' : 'Login / Register'}
+                {t('loginRegister')}
               </button>
             )}
 

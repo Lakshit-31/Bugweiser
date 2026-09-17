@@ -35,6 +35,20 @@ const playAudioCue = (frequency = 440, duration = 0.15) => {
   }
 };
 
+const getBcp47Lang = (lang) => {
+  if (!lang) return 'hi-IN';
+  if (lang.includes('-')) return lang;
+  switch (lang) {
+    case 'en': return 'en-IN';
+    case 'hi': return 'hi-IN';
+    case 'pa': return 'pa-IN';
+    case 'mr': return 'mr-IN';
+    case 'gu': return 'gu-IN';
+    case 'ta': return 'ta-IN';
+    default: return 'hi-IN';
+  }
+};
+
 export const speakText = (text, lang = 'hi-IN', onEnd = null) => {
   if (!('speechSynthesis' in window)) {
     console.warn('Browser does not support Speech Synthesis');
@@ -59,7 +73,7 @@ export const speakText = (text, lang = 'hi-IN', onEnd = null) => {
     const utterance = new SpeechSynthesisUtterance(text);
     
     // Set target language
-    const targetLang = (lang === 'hi' || lang === 'hi-IN') ? 'hi-IN' : 'en-IN';
+    const targetLang = getBcp47Lang(lang);
     utterance.lang = targetLang;
     utterance.rate = 0.85; // Natural pace
     utterance.pitch = 1.0;
@@ -70,14 +84,18 @@ export const speakText = (text, lang = 'hi-IN', onEnd = null) => {
       cachedVoices = window.speechSynthesis.getVoices();
     }
 
-    // Find best voice match
-    let preferredVoice = cachedVoices.find(v => v.lang === 'hi-IN' || v.lang.startsWith('hi'));
-    if (!preferredVoice && (lang === 'en' || lang === 'en-IN')) {
+    const shortLang = targetLang.split('-')[0];
+    // Find best voice match for the target language
+    let preferredVoice = cachedVoices.find(v => v.lang === targetLang || v.lang.startsWith(shortLang));
+    if (!preferredVoice && targetLang.startsWith('hi')) {
+      preferredVoice = cachedVoices.find(v => v.lang.startsWith('hi') || v.name.toLowerCase().includes('hindi'));
+    }
+    if (!preferredVoice && targetLang.startsWith('en')) {
       preferredVoice = cachedVoices.find(v => v.lang === 'en-IN' || v.name.toLowerCase().includes('india'));
     }
     if (!preferredVoice) {
-      // Fallback to any English or default system voice
-      preferredVoice = cachedVoices.find(v => v.lang.startsWith('en')) || cachedVoices[0];
+      // Fallback to any Indian voice or default system voice
+      preferredVoice = cachedVoices.find(v => v.lang.includes('IN') || v.lang.startsWith('en')) || cachedVoices[0];
     }
 
     if (preferredVoice) {
@@ -136,7 +154,7 @@ export const createSpeechRecognizer = (onResult, onError, lang = 'hi-IN') => {
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.lang = (lang === 'hi' || lang === 'hi-IN') ? 'hi-IN' : 'en-IN';
+  recognition.lang = getBcp47Lang(lang);
 
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;

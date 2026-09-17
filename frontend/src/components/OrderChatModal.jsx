@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../context/WebSocketContext';
+import { useLanguage } from '../context/LanguageContext';
 import { speakText, createSpeechRecognizer } from '../services/voiceService';
 import { Send, Mic, Volume2, X, MessageSquare, Sparkles, User, Calendar, CloudRain, Truck, Wheat } from 'lucide-react';
 import axios from 'axios';
 
 export const OrderChatModal = ({ order, currentUser, onClose }) => {
   const { stompClient } = useWebSocket();
+  const { lang, t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -14,7 +16,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
 
   const isFarmer = currentUser?.role === 'ROLE_FARMER';
   const otherPartyName = isFarmer ? order.buyerName : order.farmerName;
-  const otherPartyRole = isFarmer ? 'Buyer (खरीदार)' : 'Farmer (किसान)';
+  const otherPartyRole = isFarmer ? t('buyerRole') : t('farmerRole');
 
   useEffect(() => {
     fetchChatHistory();
@@ -34,7 +36,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
 
         // Automatically speak incoming chat message aloud if sent by other party
         if (newMsg.senderId !== currentUser?.id) {
-          speakText(`${newMsg.senderName}: ${newMsg.message}`, 'hi');
+          speakText(`${newMsg.senderName}: ${newMsg.message}`, lang);
         }
       } catch (err) {
         console.error('Error parsing chat websocket message:', err);
@@ -44,7 +46,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [stompClient, order.id, currentUser?.id]);
+  }, [stompClient, order.id, currentUser?.id, lang]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -85,7 +87,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
         return [...prev, savedMsg];
       });
     } catch (err) {
-      alert('संदेश भेजने में त्रुटि हुई।');
+      alert('Error sending message.');
     }
   };
 
@@ -95,12 +97,12 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
       (transcript) => {
         setIsListening(false);
         setInputText(transcript);
-        speakText(`रिकॉर्ड किया गया संदेश: ${transcript}`, 'hi');
+        speakText(transcript, lang);
       },
       (err) => {
         setIsListening(false);
       },
-      'hi'
+      lang
     );
 
     if (recognizer) recognizer.start();
@@ -129,7 +131,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
                 </span>
               </h3>
               <p className="text-xs text-emerald-200">
-                ऑर्डर: <strong className="text-amber-300">{order.cropName}</strong> ({order.quantityQuintals} क्विंटल) • ₹{order.totalAmount}
+                {t('orderIdLabel', { id: order.id?.substring(0, 8) })}: <strong className="text-amber-300">{order.cropName}</strong> ({order.quantityQuintals} {t('quintalUnit')}) • ₹{order.totalAmount}
               </p>
             </div>
           </div>
@@ -142,7 +144,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
         <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs flex justify-between items-center text-emerald-900">
           <div className="flex items-center space-x-1 font-semibold">
             <Calendar className="w-4 h-4 text-emerald-700" />
-            <span>डिलीवरी तारीख: {order.expectedDeliveryDate || order.requestedDeliveryDate || 'टीबीडी'}</span>
+            <span>{t('scheduledDeliveryDateLabel', { date: order.expectedDeliveryDate || order.requestedDeliveryDate || 'TBD' })}</span>
           </div>
           {order.delayReason && (
             <span className="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-md border border-amber-300">
@@ -155,25 +157,25 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
         {isFarmer && (
           <div className="bg-slate-50 px-3 py-2 border-b border-slate-200 flex space-x-2 overflow-x-auto text-xs scrollbar-none">
             <button
-              onClick={() => handleQuickPillClick('🌧️ भारी बारिश के कारण डिलीवरी में 2-3 दिन की देरी हो सकती है।')}
+              onClick={() => handleQuickPillClick('🌧️ Delivery delayed by 2-3 days due to heavy rain.')}
               className="flex-shrink-0 bg-blue-50 hover:bg-blue-100 text-blue-800 px-3 py-1.5 rounded-xl font-bold border border-blue-200 flex items-center space-x-1 transition"
             >
               <CloudRain className="w-3.5 h-3.5 text-blue-600" />
-              <span>🌧️ भारी बारिश (Rain)</span>
+              <span>🌧️ Rain</span>
             </button>
             <button
-              onClick={() => handleQuickPillClick('🚛 ट्रांसपोर्ट / गाड़ी की समस्या के कारण डिलीवरी अपडेट की जा रही है।')}
+              onClick={() => handleQuickPillClick('🚛 Delivery schedule updated due to transport/vehicle issue.')}
               className="flex-shrink-0 bg-amber-50 hover:bg-amber-100 text-amber-900 px-3 py-1.5 rounded-xl font-bold border border-amber-200 flex items-center space-x-1 transition"
             >
               <Truck className="w-3.5 h-3.5 text-amber-700" />
-              <span>🚛 ट्रांसपोर्ट (Transport)</span>
+              <span>🚛 Transport</span>
             </button>
             <button
-              onClick={() => handleQuickPillClick('🌾 फसल कटाई में समय लग रहा है, जल्द डिलीवरी होगी।')}
+              onClick={() => handleQuickPillClick('🌾 Harvesting in progress, produce will be dispatched shortly.')}
               className="flex-shrink-0 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 px-3 py-1.5 rounded-xl font-bold border border-emerald-200 flex items-center space-x-1 transition"
             >
               <Wheat className="w-3.5 h-3.5 text-emerald-700" />
-              <span>🌾 फसल कटाई (Harvesting)</span>
+              <span>🌾 Harvesting</span>
             </button>
           </div>
         )}
@@ -182,16 +184,16 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
         <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-100/70">
           {loading ? (
             <div className="text-center py-10 text-slate-400 text-xs animate-pulse">
-              संदेश लोड हो रहे हैं (Loading messages...)...
+              {t('searchingListings')}
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-12 space-y-2">
               <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mx-auto">
                 <MessageSquare className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold text-slate-700">अभी कोई चैट संदेश नहीं है</p>
+              <p className="text-sm font-bold text-slate-700">{t('chatModalTitle', { id: order.id?.substring(0, 8) })}</p>
               <p className="text-xs text-slate-500">
-                नीचे माइक बटन या टाइप करके किसान और खरीदार सीधे बात कर सकते हैं।
+                {t('typeMessagePlaceholder')}
               </p>
             </div>
           ) : (
@@ -207,16 +209,15 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
                     <div className="flex justify-between items-center mb-1 text-[11px] font-semibold opacity-90 space-x-3">
                       <span className={isMe ? 'text-amber-300' : 'text-emerald-700'}>{msg.senderName}</span>
                       <button
-                        onClick={() => speakText(msg.message, 'hi')}
+                        onClick={() => speakText(msg.message, lang)}
                         className={`p-1 rounded hover:opacity-80 transition ${isMe ? 'text-white' : 'text-slate-500'}`}
-                        title="संदेश सुनें (Listen message)"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                     <p className="text-xs font-medium leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                     <div className={`text-[10px] mt-1 text-right ${isMe ? 'text-emerald-200' : 'text-slate-400'}`}>
-                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'अभी'}
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </div>
                   </div>
                 </div>
@@ -237,7 +238,6 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
                   ? 'bg-red-500 text-white border-red-600 animate-pulse' 
                   : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border-emerald-300'
               }`}
-              title="बोलकर संदेश लिखें (Voice Mic)"
             >
               <Mic className="w-5 h-5" />
             </button>
@@ -246,7 +246,7 @@ export const OrderChatModal = ({ order, currentUser, onClose }) => {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={isListening ? "सुन रहे हैं... (Listening...)" : "संदेश लिखें या माइक से बोलें..."}
+              placeholder={isListening ? t('listeningText') : t('typeMessagePlaceholder')}
               className="flex-1 p-3 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none text-xs font-medium"
             />
 

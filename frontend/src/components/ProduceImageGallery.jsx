@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Maximize2, X, Image as ImageIcon } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBadge }) => {
+  const { t } = useLanguage();
   const [activeIdx, setActiveIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -46,7 +48,7 @@ export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBa
         {/* Counter Badge */}
         <div className="absolute top-3 right-3 z-10 bg-black/75 backdrop-blur-md text-amber-300 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider flex items-center space-x-1 border border-amber-400/30 shadow">
           <ImageIcon className="w-3.5 h-3.5 text-amber-400" />
-          <span>{activeIdx + 1} / {photos.length} Photos</span>
+          <span>{t('photosCountBadge', { current: activeIdx + 1, total: photos.length })}</span>
         </div>
 
         {/* Prev / Next Arrows */}
@@ -56,7 +58,7 @@ export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBa
               type="button"
               onClick={handlePrev}
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/90 text-white p-2 rounded-full transition opacity-80 hover:opacity-100 z-10 shadow"
-              title="पिछली फोटो (Previous)"
+              title={t('prevPhoto')}
             >
               <ChevronLeft className="w-4 h-4 stroke-[3]" />
             </button>
@@ -64,7 +66,7 @@ export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBa
               type="button"
               onClick={handleNext}
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/90 text-white p-2 rounded-full transition opacity-80 hover:opacity-100 z-10 shadow"
-              title="अगली फोटो (Next)"
+              title={t('nextPhoto')}
             >
               <ChevronRight className="w-4 h-4 stroke-[3]" />
             </button>
@@ -76,7 +78,7 @@ export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBa
           type="button"
           onClick={() => setIsFullscreen(true)}
           className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/90 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition z-10"
-          title="पूरी फोटो देखें (Full screen)"
+          title={t('fullscreenPhoto')}
         >
           <Maximize2 className="w-4 h-4" />
         </button>
@@ -129,11 +131,11 @@ export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBa
                 className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span>पिछला</span>
+                <span>{t('prevPhoto')}</span>
               </button>
               
               <span className="text-xs font-bold text-amber-300">
-                {cropName} - फोटो {activeIdx + 1} / {photos.length}
+                {cropName} - {t('photosCountBadge', { current: activeIdx + 1, total: photos.length })}
               </span>
 
               <button
@@ -141,7 +143,7 @@ export const ProduceImageGallery = ({ imageUrls = [], cropName = 'Crop', gradeBa
                 onClick={handleNext}
                 className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1"
               >
-                <span>अगला</span>
+                <span>{t('nextPhoto')}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>

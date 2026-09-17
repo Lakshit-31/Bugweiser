@@ -8,16 +8,16 @@ import { Mic, MicOff, Volume2, Upload, CheckCircle2, AlertCircle, X, Sparkles, I
 import axios from 'axios';
 
 const questions = [
-  { id: 'cropName', key: 'voicePrompt1', hi: "आप कौन सी फसल बेचना चाहते हैं?", en: "Which crop do you want to sell?", placeholder: "e.g., Wheat (गेहूँ)" },
-  { id: 'quantityQuintals', key: 'voicePrompt2', hi: "कितनी मात्रा क्विंटल में उपलब्ध है?", en: "How much quantity in Quintals is available?", placeholder: "e.g., 50" },
-  { id: 'district', key: 'voicePrompt3', hi: "आपकी लोकेशन या जिला कहाँ है?", en: "Where is your location or district?", placeholder: "District, State" },
-  { id: 'harvestDate', key: 'voicePrompt4', hi: "फसल किस तारीख को काटी गई थी?", en: "When was the crop harvested?", placeholder: "YYYY-MM-DD" },
-  { id: 'pesticidesUsed', key: 'voicePrompt5', hi: "उगाते समय कौन से कीटनाशक इस्तेमाल हुए?", en: "Which pesticides were used?", placeholder: "e.g., Organic Neem Oil, Zero" },
-  { id: 'pricePerQuintal', key: 'voicePrompt6', hi: "आपका अपेक्षित मूल्य कितना रुपया प्रति क्विंटल है?", en: "What is your expected price per Quintal?", placeholder: "e.g., 2200" },
+  { id: 'cropName', key: 'voicePrompt1', placeholder: "e.g., Wheat / Rice / Potato" },
+  { id: 'quantityQuintals', key: 'voicePrompt2', placeholder: "e.g., 50" },
+  { id: 'district', key: 'voicePrompt3', placeholder: "District, State" },
+  { id: 'harvestDate', key: 'voicePrompt4', placeholder: "YYYY-MM-DD" },
+  { id: 'pesticidesUsed', key: 'voicePrompt5', placeholder: "e.g., Organic Neem Oil, Zero" },
+  { id: 'pricePerQuintal', key: 'voicePrompt6', placeholder: "e.g., 2200" },
 ];
 
 export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreated }) => {
-  const { lang, t } = useLanguage();
+  const { lang, supportedLanguages, t } = useLanguage();
   const { user } = useAuth();
   const { triggerRefresh } = useWebSocket();
 
@@ -25,7 +25,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [autoAdvance, setAutoAdvance] = useState(true);
-  const [voiceLang, setVoiceLang] = useState('hi'); // 'hi' or 'en'
+  const [voiceLang, setVoiceLang] = useState(lang || 'hi');
   const [hasStartedVoice, setHasStartedVoice] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -47,20 +47,22 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
 
   useEffect(() => {
     if (!isOpen || !user) {
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
       setHasStartedVoice(false);
     } else {
       setStep(0);
       setErrorMsg('');
       setVoiceLang(lang);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, lang]);
 
   useEffect(() => {
     const pest = (formData.pesticidesUsed || '').toLowerCase();
-    if (pest.includes('organic') || pest.includes('neem') || pest.includes('zero') || pest.includes('जैविक')) {
+    if (pest.includes('organic') || pest.includes('neem') || pest.includes('zero') || pest.includes('जैविक') || pest.includes('ਜੈਵਿਕ') || pest.includes('સજીવ') || pest.includes('இயற்கை')) {
       setCalculatedGrade('GRADE_A');
-    } else if (pest.includes('heavy') || pest.includes('chemical')) {
+    } else if (pest.includes('heavy') || pest.includes('chemical') || pest.includes('रसायनिक') || pest.includes('ರసాయನ')) {
       setCalculatedGrade('GRADE_C');
     } else {
       setCalculatedGrade('GRADE_B');
@@ -70,7 +72,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
   // Initial gesture trigger to start audio synthesis cleanly
   const handleStartSystemVoice = () => {
     if (!user) {
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       if (onOpenAuth) {
         onClose();
         onOpenAuth();
@@ -78,9 +80,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
       return;
     }
     setHasStartedVoice(true);
-    const greeting = voiceLang === 'hi' 
-      ? "नमस्ते किसान भाई, मैं आपका मूल्य एआई वॉइस असिस्टेंट हूँ। चलिए फसल की जानकारी दर्ज करते हैं।" 
-      : "Hello, I am your Moolya AI Voice Assistant. Let's record your crop details.";
+    const greeting = `${t('welcome')}, ${t('voiceAssistantTitle')}`;
 
     setIsSpeaking(true);
     speakText(greeting, voiceLang, () => {
@@ -91,20 +91,18 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
 
   const startConversationalStep = (stepIndex) => {
     if (!user) {
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       return;
     }
     if (stepIndex >= questions.length) {
-      const endText = voiceLang === 'hi' 
-        ? "आगे बढ़ने के लिए अपनी फसल या प्रोडक्ट की फोटो अपलोड करें।"
-        : "To proceed further, please upload photos of your crop or product.";
+      const endText = t('uploadPhotosTitle');
       speakText(endText, voiceLang);
       return;
     }
 
     setStep(stepIndex);
     const q = questions[stepIndex];
-    const textToSpeak = voiceLang === 'hi' ? q.hi : q.en;
+    const textToSpeak = t(q.key);
 
     setIsSpeaking(true);
     setIsListening(false);
@@ -119,7 +117,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
 
   const activateMicForCurrentStep = (stepIndex) => {
     if (!user) {
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
       if (onOpenAuth) {
         onClose();
         onOpenAuth();
@@ -138,10 +136,8 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
         if (q.id === 'quantityQuintals') {
           const parsed = parseQuantityAndUnit(transcript);
           parsedVal = String(parsed.displayQuantity);
-          const unitText = parsed.unit === 'KG' ? (voiceLang === 'hi' ? 'किलो (Kg)' : 'Kg') : (voiceLang === 'hi' ? 'क्विंटल' : 'Quintals');
-          ackText = voiceLang === 'hi'
-            ? `मात्रा दर्ज की गई: ${parsedVal} ${unitText}`
-            : `Recorded quantity: ${parsedVal} ${unitText}`;
+          const unitText = parsed.unit === 'KG' ? t('kgUnit') : t('quintalUnit');
+          ackText = `${t('availableQuantity')} ${parsedVal} ${unitText}`;
           setFormData(prev => ({
             ...prev,
             quantityQuintals: parsed.quantityQuintals,
@@ -150,18 +146,14 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
           }));
         } else if (q.id === 'pricePerQuintal') {
           parsedVal = parseQuantityOrPrice(transcript);
-          ackText = voiceLang === 'hi'
-            ? `मूल्य दर्ज किया गया: ${parsedVal} रुपये प्रति क्विंटल`
-            : `Recorded price: ${parsedVal} Rupees per Quintal`;
+          ackText = `${t('expectedPrice')}: ₹${parsedVal}`;
           setFormData(prev => ({ ...prev, [q.id]: parsedVal }));
         } else if (q.id === 'harvestDate') {
           parsedVal = parseSpokenDate(transcript);
-          ackText = voiceLang === 'hi'
-            ? `कटाई तारीख दर्ज की गई: ${parsedVal}`
-            : `Recorded harvest date: ${parsedVal}`;
+          ackText = `${t('harvestDate')}: ${parsedVal}`;
           setFormData(prev => ({ ...prev, [q.id]: parsedVal }));
         } else {
-          ackText = voiceLang === 'hi' ? `प्राप्त हुआ: ${transcript}` : `Recorded: ${transcript}`;
+          ackText = t('voiceRecordedAck', { text: transcript });
           setFormData(prev => ({ ...prev, [q.id]: parsedVal }));
         }
         setIsSpeaking(true);
@@ -173,7 +165,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
           }
         });
       },
-      (err) => {
+      () => {
         setIsListening(false);
       },
       voiceLang
@@ -230,7 +222,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
   const handleSubmit = async () => {
     setErrorMsg('');
     if (formData.imageUrls.length < 4) {
-      setErrorMsg('सुरक्षा नियम: लिस्टिंग के लिए कम से कम 4 से 5 तस्वीरें अपलोड करना अनिवार्य है! (Strict Rule: 4-5 photos required)');
+      setErrorMsg(t('minPhotosRequiredAlert'));
       return;
     }
 
@@ -240,7 +232,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
     const cleanedDate = parseSpokenDate(formData.harvestDate);
 
     if (!formData.cropName || !cleanedQty || !cleanedPrice) {
-      setErrorMsg('कृपया फसल का नाम, मात्रा और मूल्य भरें।');
+      setErrorMsg(t('errorOccurred'));
       return;
     }
 
@@ -266,16 +258,13 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
 
       const res = await axios.post('/api/v1/produce/create-voice', payload);
       setSubmitting(false);
-      const successText = voiceLang === 'hi'
-        ? "आपकी सारी जानकारी दर्ज कर दी गई है।"
-        : "All your information has been registered successfully.";
-      speakText(successText, voiceLang);
+      speakText(t('success'), voiceLang);
       triggerRefresh();
       if (onListingCreated) onListingCreated(res.data);
       onClose();
     } catch (err) {
       setSubmitting(false);
-      setErrorMsg(err.response?.data?.message || 'उत्पाद जोड़ने में त्रुटि हुई।');
+      setErrorMsg(err.response?.data?.message || t('errorOccurred'));
     }
   };
 
@@ -296,11 +285,11 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
             <div>
               <div className="flex items-center space-x-2">
                 <h2 className="text-lg font-extrabold text-amber-300">
-                  1-on-1 AI सिस्टम आवाज असिस्टेंस (System Voice AI)
+                  {t('voiceAssistantTitle')}
                 </h2>
               </div>
               <p className="text-xs text-emerald-200">
-                हिंदी / English सिस्टम बोलकर मार्गदर्शन करेगा
+                1-on-1 AI Voice Producer Assistant
               </p>
             </div>
           </div>
@@ -317,11 +306,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
               <div className="bg-amber-400 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center text-emerald-950 shadow-inner">
                 <Lock className="w-8 h-8 stroke-[2.5]" />
               </div>
-              <h3 className="text-xl font-black text-emerald-950">लॉगिन अनिवार्य है (Login Required)</h3>
-              <p className="text-xs font-bold text-slate-600 max-w-md mx-auto">
-                एआई वॉइस असिस्टेंट का उपयोग करने और अपनी फसल सीधे लिस्ट करने के लिए कृपया पहले लॉगिन करें।
-                (Please log in or register first to use the AI Voice Assistant.)
-              </p>
+              <h3 className="text-xl font-black text-emerald-950">{t('pleaseLogin')}</h3>
               <button
                 type="button"
                 onClick={() => {
@@ -330,7 +315,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                 }}
                 className="w-full py-3.5 bg-emerald-950 hover:bg-emerald-900 text-amber-300 font-black rounded-2xl text-sm shadow-xl flex items-center justify-center space-x-2 border border-amber-300/40"
               >
-                <span>लॉगिन / रजिस्ट्रेशन करें (Log In / Register)</span>
+                <span>{t('loginRegister')}</span>
               </button>
             </div>
           ) : (
@@ -339,54 +324,45 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
           {!hasStartedVoice ? (
             <div className="bg-gradient-to-r from-amber-400 to-amber-500 p-6 rounded-3xl text-emerald-950 text-center space-y-3 shadow-lg border-2 border-amber-300 animate-pulse">
               <Volume2 className="w-12 h-12 mx-auto stroke-[2.5]" />
-              <h3 className="text-xl font-black">सिस्टम आवाज (System Voice) चालू करें</h3>
-              <p className="text-xs font-bold max-w-md mx-auto">
-                ब्राउज़र ऑडियो सुरक्षा चालू करने के लिए नीचे दिए गए बटन पर क्लिक करें। एआई तुरंत हिंदी में बोलेगा।
-              </p>
+              <h3 className="text-xl font-black">{t('startAiVoice')}</h3>
               
               {/* Language Selection */}
-              <div className="flex justify-center space-x-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setVoiceLang('hi')}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-extrabold border ${
-                    voiceLang === 'hi' ? 'bg-emerald-950 text-amber-300 border-emerald-900' : 'bg-white/80 text-emerald-950'
-                  }`}
-                >
-                  हिंदी आवाज (Hindi Voice)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVoiceLang('en')}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-extrabold border ${
-                    voiceLang === 'en' ? 'bg-emerald-950 text-amber-300 border-emerald-900' : 'bg-white/80 text-emerald-950'
-                  }`}
-                >
-                  English Voice
-                </button>
+              <div className="flex justify-center flex-wrap gap-2 pt-1">
+                {supportedLanguages.map(item => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => setVoiceLang(item.code)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border transition ${
+                      voiceLang === item.code ? 'bg-emerald-950 text-amber-300 border-emerald-900 shadow' : 'bg-white/80 text-emerald-950 hover:bg-white'
+                    }`}
+                  >
+                    {item.nativeName}
+                  </button>
+                ))}
               </div>
 
               <button
                 type="button"
                 onClick={handleStartSystemVoice}
-                className="w-full py-3.5 bg-emerald-950 hover:bg-emerald-900 text-amber-300 font-black rounded-2xl text-base shadow-xl flex items-center justify-center space-x-2 border border-amber-300/40"
+                className="w-full py-3.5 bg-emerald-950 hover:bg-emerald-900 text-amber-300 font-black rounded-2xl text-base shadow-xl flex items-center justify-center space-x-2 border border-amber-300/40 mt-2"
               >
                 <Play className="w-5 h-5 fill-amber-300" />
-                <span>सिस्टम आवाज शुरू करें (Start System Voice Speech)</span>
+                <span>{t('startAiVoice')}</span>
               </button>
             </div>
           ) : (
             <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 flex justify-between items-center">
               <span className="text-xs font-bold text-emerald-900">
-                🎙️ सिस्टम आवाज active: {voiceLang === 'hi' ? 'हिंदी (Hindi)' : 'English'}
+                🎙️ {supportedLanguages.find(l => l.code === voiceLang)?.nativeName || voiceLang}
               </span>
               <button
                 type="button"
-                onClick={() => speakText(voiceLang === 'hi' ? currentQ.hi : currentQ.en, voiceLang)}
+                onClick={() => speakText(t(currentQ.key), voiceLang)}
                 className="text-xs px-3 py-1 bg-amber-400 text-emerald-950 font-bold rounded-lg shadow flex items-center space-x-1"
               >
                 <Volume2 className="w-3.5 h-3.5" />
-                <span>फिर से सुनें</span>
+                <span>{t('listenAgainBtn')}</span>
               </button>
             </div>
           )}
@@ -396,27 +372,27 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
             
             <div className="flex justify-between items-center mb-3">
               <span className="text-xs font-black uppercase text-amber-300 tracking-wider">
-                प्रश्न {step + 1} of {questions.length}
+                Step {step + 1} of {questions.length}
               </span>
               
               <div className="flex items-center space-x-2">
                 {isSpeaking && (
                   <span className="text-xs text-amber-300 font-bold flex items-center space-x-1 animate-pulse">
                     <Volume2 className="w-4 h-4 text-amber-300" />
-                    <span>सिस्टम आवाज बोल रही है...</span>
+                    <span>AI Voice...</span>
                   </span>
                 )}
                 {isListening && (
                   <span className="text-xs text-red-300 font-bold flex items-center space-x-1 animate-pulse">
                     <Mic className="w-4 h-4 text-red-400" />
-                    <span>माइक चालू है (Listening)...</span>
+                    <span>{t('voiceListeningState')}</span>
                   </span>
                 )}
               </div>
             </div>
 
             <h3 className="text-xl font-extrabold text-white mb-4">
-              {voiceLang === 'hi' ? currentQ.hi : currentQ.en}
+              {t(currentQ.key)}
             </h3>
 
             {/* Controls */}
@@ -425,7 +401,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                 type="button"
                 onClick={() => startConversationalStep(step)}
                 className="p-3 bg-emerald-800 hover:bg-emerald-700 text-amber-300 rounded-full transition"
-                title="फिर से प्रश्न सुनें"
+                title="Listen again"
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
@@ -438,7 +414,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                     ? 'bg-red-500 text-white animate-pulse ring-8 ring-red-400/40'
                     : 'bg-amber-400 hover:bg-amber-300 text-emerald-950'
                 }`}
-                title="माइक कंट्रोल"
+                title="Mic Control"
               >
                 {isListening ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
               </button>
@@ -452,7 +428,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-xs font-bold text-slate-700">
-                रिकॉर्ड किया गया उत्तर (Spoken Value / Edit):
+                {t('availableQuantity')}
               </label>
               {currentQ.id === 'quantityQuintals' && (
                 <div className="flex bg-slate-200 p-0.5 rounded-xl text-xs font-extrabold border border-slate-300">
@@ -463,7 +439,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                       formData.unit === 'QUINTAL' ? 'bg-emerald-950 text-amber-300 shadow' : 'text-slate-700 hover:text-emerald-900'
                     }`}
                   >
-                    क्विंटल (Quintal)
+                    {t('quintalUnit')}
                   </button>
                   <button
                     type="button"
@@ -472,7 +448,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                       formData.unit === 'KG' ? 'bg-emerald-950 text-amber-300 shadow' : 'text-slate-700 hover:text-emerald-900'
                     }`}
                   >
-                    किलो (Kg)
+                    {t('kgUnit')}
                   </button>
                 </div>
               )}
@@ -506,7 +482,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
               onClick={() => startConversationalStep(step - 1)}
               className="px-4 py-2 text-xs font-bold bg-slate-100 text-slate-700 rounded-xl disabled:opacity-40"
             >
-              ← पिछला प्रश्न
+              ← {t('listenAgainBtn')}
             </button>
             <button
               type="button"
@@ -514,7 +490,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
               onClick={() => startConversationalStep(step + 1)}
               className="px-5 py-2 text-xs font-bold bg-emerald-800 text-amber-300 rounded-xl hover:bg-emerald-900"
             >
-              अगला प्रश्न →
+              {t('nextStepBtn')} →
             </button>
           </div>
 
@@ -522,25 +498,25 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
           <div className="border-t border-slate-200 pt-4 space-y-3">
             <div className="bg-amber-50 border border-amber-300 p-3.5 rounded-2xl flex items-center space-x-2.5 text-xs font-black text-emerald-950 shadow-sm">
               <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 animate-pulse" />
-              <span>📸 आगे बढ़ने के लिए अपनी फसल या प्रोडक्ट की फोटो अपलोड करें (Upload 4-5 photos to proceed)</span>
+              <span>{t('uploadPhotosTitle')}</span>
             </div>
 
             <div className="flex justify-between items-center">
               <label className="text-sm font-extrabold text-slate-800 flex items-center space-x-1">
                 <Upload className="w-4 h-4 text-emerald-800" />
-                <span>{t('uploadImages')}</span>
+                <span>{t('uploadImagesTitle')}</span>
               </label>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
                 formData.imageUrls.length >= 4 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'
               }`}>
-                {formData.imageUrls.length} / 5 तस्वीरें (कम से कम 4 आवश्यक)
+                {formData.imageUrls.length} / 5 ({t('uploadImagesCount')})
               </span>
             </div>
 
             <div className="space-y-2">
               <label className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold py-2.5 px-4 rounded-xl border border-dashed border-emerald-400 flex items-center justify-center space-x-2 transition cursor-pointer">
                 <ImagePlus className="w-4 h-4 text-emerald-700" />
-                <span>तस्वीरें चुनें / डिवाइस से अपलोड करें (Choose / Upload Crop Photos)</span>
+                <span>{t('uploadImagesTitle')}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -556,7 +532,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                   type="url"
                   value={customUrl}
                   onChange={(e) => setCustomUrl(e.target.value)}
-                  placeholder="या इमेज यूआरएल दर्ज करें (or paste image URL)"
+                  placeholder="URL..."
                   className="flex-1 text-xs border border-slate-300 rounded-xl px-3 py-2 outline-none focus:border-emerald-700"
                   disabled={formData.imageUrls.length >= 5}
                 />
@@ -566,7 +542,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
                   disabled={!customUrl.trim() || formData.imageUrls.length >= 5}
                   className="px-4 py-2 bg-emerald-800 text-amber-300 text-xs font-bold rounded-xl disabled:opacity-50"
                 >
-                  जोड़ें (Add)
+                  +
                 </button>
               </div>
             </div>
@@ -604,7 +580,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
         {/* Footer */}
         <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-end space-x-3 flex-shrink-0">
           <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-bold text-slate-600">
-            रद्द करें
+            {t('cancelBtn')}
           </button>
           <button
             type="button"
@@ -612,7 +588,7 @@ export const VoiceListingModal = ({ isOpen, onClose, onOpenAuth, onListingCreate
             disabled={submitting || formData.imageUrls.length < 4}
             className="px-6 py-3 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-extrabold rounded-2xl text-sm transition shadow disabled:opacity-50 flex items-center space-x-2"
           >
-            {submitting ? 'सबमिट हो रहा है...' : t('submitListing')}
+            {submitting ? t('submittingListing') : t('submitListing')}
           </button>
         </div>
 

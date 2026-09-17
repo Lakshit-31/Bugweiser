@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { AlertTriangle, X, ShieldAlert, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 
 export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
+  const { t } = useLanguage();
   const [reason, setReason] = useState('NON_PAYMENT');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,7 +16,7 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description.trim()) {
-      setErrorMsg('कृपया शिकायत का विवरण दर्ज करें।');
+      setErrorMsg('Please enter complaint details.');
       return;
     }
 
@@ -25,9 +27,9 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
       const isFarmer = user?.role === 'ROLE_FARMER';
       const payload = {
         orderId: order.id,
-        cropName: order.cropName || 'फसल',
+        cropName: order.cropName || 'Produce',
         reporterId: user?.id,
-        reporterName: user?.fullName || 'उपयोगकर्ता',
+        reporterName: user?.fullName || 'User',
         reporterRole: user?.role,
         targetUserId: isFarmer ? order.buyerId : order.farmerId,
         targetUserName: isFarmer ? order.buyerName : order.farmerName,
@@ -42,7 +44,7 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
         onClose();
       }, 2000);
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'रिपोर्ट सबमिट करने में असमर्थ।');
+      setErrorMsg(err.response?.data?.message || 'Unable to submit report.');
     } finally {
       setLoading(false);
     }
@@ -60,10 +62,10 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block">
-                सुरक्षा एवं विवाद प्रबंधन (Admin Escalate)
+                {t('reportOrderSub')}
               </span>
               <h3 className="text-lg font-extrabold text-white">
-                ऑर्डर की शिकायत दर्ज करें (Report Order)
+                {t('reportOrderTitle')}
               </h3>
             </div>
           </div>
@@ -78,18 +80,18 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
               <CheckCircle className="w-10 h-10" />
             </div>
-            <h4 className="text-xl font-black text-slate-900">शिकायत दर्ज कर ली गई है!</h4>
+            <h4 className="text-xl font-black text-slate-900">{t('reportSuccessTitle')}</h4>
             <p className="text-xs text-slate-600 font-medium">
-              Moolya एडमिन टीम इस ऑर्डर (#{order.id?.substring(0, 8)}) की गहन जांच करेगी और 24-48 घंटों के भीतर कार्रवाई करेगी।
+              {t('reportSuccessDesc', { id: order.id?.substring(0, 8) })}
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             
             <div className="bg-red-50 border border-red-200 p-3 rounded-2xl text-xs font-semibold text-red-950 space-y-1">
-              <span className="font-extrabold text-red-800 block">ऑर्डर विवरण:</span>
-              <p>🌾 फसल: <strong>{order.cropName}</strong> | मात्रा: <strong>{order.quantityQuintals} क्विंटल</strong></p>
-              <p>💰 राशि: <strong>₹{order.totalAmount}</strong> | स्थिति: <strong>{order.status}</strong></p>
+              <span className="font-extrabold text-red-800 block">{t('orderDetailsSummary')}:</span>
+              <p>🌾 {order.cropName} | {order.quantityQuintals} {t('quintalUnit')}</p>
+              <p>💰 ₹{order.totalAmount} | {order.status}</p>
             </div>
 
             {errorMsg && (
@@ -101,32 +103,31 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                शिकायत का कारण चुनें (Reason):
+                {t('reportReasonLabel')}
               </label>
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 className="w-full p-3 rounded-2xl border border-slate-300 font-bold text-xs text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none"
               >
-                <option value="NON_PAYMENT">भुगतान नहीं प्राप्त हुआ / नकली रसीद (Non-Payment)</option>
-                <option value="NON_DELIVERY">समय पर डिलीवरी नहीं मिली (Non-Delivery)</option>
-                <option value="QUALITY_MISMATCH">फसल की गुणवत्ता में अंतर (Quality Mismatch)</option>
-                <option value="FRAUD_ATTEMPT">धोखाधड़ी का प्रयास (Fraudulent Activity)</option>
-                <option value="COMMUNICATION_ISSUE">दुर्व्यवहार या अनुचित व्यवहार (Misbehavior / Abuse)</option>
-                <option value="OTHER">अन्य कारण (Other Issue)</option>
+                <option value="NON_PAYMENT">{t('reportReasonNonPayment')}</option>
+                <option value="NON_DELIVERY">{t('reportReasonDelivery')}</option>
+                <option value="QUALITY_MISMATCH">{t('reportReasonQuality')}</option>
+                <option value="FRAUD_ATTEMPT">{t('reportReasonFraud')}</option>
+                <option value="OTHER">{t('reportReasonOther')}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                विस्तृत विवरण दें (Detailed Description):
+                {t('reportDetailsLabel')}
               </label>
               <textarea
                 rows={4}
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="कृपया स्पष्ट करें कि क्या समस्या हुई..."
+                placeholder={t('reportDetailsPlaceholder')}
                 className="w-full p-3 rounded-2xl border border-slate-300 text-xs font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"
               />
             </div>
@@ -137,7 +138,7 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
                 onClick={onClose}
                 className="w-1/2 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition"
               >
-                रद्द करें
+                {t('cancelBtn')}
               </button>
               <button
                 type="submit"
@@ -145,7 +146,7 @@ export const ReportOrderModal = ({ isOpen, onClose, order, user }) => {
                 className="w-1/2 py-3 bg-red-700 hover:bg-red-800 text-white font-black text-xs rounded-2xl shadow-lg transition flex items-center justify-center space-x-1 disabled:opacity-50"
               >
                 <ShieldAlert className="w-4 h-4" />
-                <span>{loading ? 'भेजा जा रहा है...' : 'एडमिन को रिपोर्ट करें'}</span>
+                <span>{loading ? t('submittingReportBtn') : t('submitReportBtn')}</span>
               </button>
             </div>
 

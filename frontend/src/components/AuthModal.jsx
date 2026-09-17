@@ -5,7 +5,7 @@ import { X, User, Lock, Phone, Mail, ShieldCheck, Building2, UserCheck, AlertCir
 
 export const AuthModal = ({ isOpen, onClose }) => {
   const { login, registerFarmer, registerBuyer } = useAuth();
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
 
   const [tab, setTab] = useState('login'); // 'login', 'farmer', 'buyer'
   const [buyerType, setBuyerType] = useState('INDIVIDUAL'); // 'INDIVIDUAL', 'BUSINESS'
@@ -52,7 +52,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
     const cleanPassword = loginPassword.trim();
 
     if (!cleanPhone || !cleanPassword) {
-      setErrorMsg('कृपया मोबाइल नंबर/ईमेल और पासवर्ड दर्ज करें।');
+      setErrorMsg(t('errorOccurred'));
       return;
     }
 
@@ -62,12 +62,12 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
     if (res.success) {
       if (loginRole === 'ADMIN' && res.user?.role !== 'ROLE_ADMIN') {
-        setErrorMsg('अस्वीकृत: यह खाता एडमिन रोल के रूप में पंजीकृत नहीं है। (Access Denied: Not an Admin user)');
+        setErrorMsg('Access Denied: Not an Admin user');
         return;
       }
       onClose();
     } else {
-      setErrorMsg(res.message || 'गलत विवरण! (Bad Credentials)');
+      setErrorMsg(res.message || t('errorOccurred'));
     }
   };
 
@@ -78,19 +78,19 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
     // Client-side Validation Checks
     if (!farmerData.fullName.trim()) {
-      setErrorMsg('कृपया पूरा नाम भरें (Full Name required)');
+      setErrorMsg(t('fullNameLabel'));
       return;
     }
     if (!/^[0-9]{10}$/.test(farmerData.phone.trim())) {
-      setErrorMsg('मोबाइल नंबर strictly 10 अंकों का होना चाहिए (e.g. 9812345678)।');
+      setErrorMsg(t('mobileNumberLabel') + ' (10 digits)');
       return;
     }
     if (!/^[0-9]{12}$/.test(farmerData.aadhaar.trim())) {
-      setErrorMsg('आधार नंबर (Aadhaar Number) strictly 12 अंकों का होना चाहिए (e.g. 123456789012)।');
+      setErrorMsg(t('aadhaarLabel'));
       return;
     }
     if (farmerData.password.length < 6) {
-      setErrorMsg('पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।');
+      setErrorMsg(t('passwordLabel'));
       return;
     }
 
@@ -102,12 +102,12 @@ export const AuthModal = ({ isOpen, onClose }) => {
       state: farmerData.state.trim() || 'Punjab',
       district: farmerData.district.trim() || 'Ludhiana',
       aadhaar: farmerData.aadhaar.trim(),
-      preferredLanguage: 'hi'
+      preferredLanguage: lang || 'hi'
     });
     setLoading(false);
 
     if (res.success) {
-      setSuccessMsg('किसान पंजीकरण सफल हुआ! किसान डैशबोर्ड में प्रवेश कर रहे हैं...');
+      setSuccessMsg(t('farmerRegSuccess'));
       setTimeout(() => {
         onClose();
       }, 1000);
@@ -122,11 +122,11 @@ export const AuthModal = ({ isOpen, onClose }) => {
     setSuccessMsg('');
 
     if (!/^[0-9]{10}$/.test(buyerData.phone.trim())) {
-      setErrorMsg('Phone number must be 10 digits.');
+      setErrorMsg(t('mobileNumberLabel') + ' (10 digits)');
       return;
     }
     if (buyerData.password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters.');
+      setErrorMsg(t('passwordLabel'));
       return;
     }
 
@@ -145,7 +145,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
     setLoading(false);
 
     if (res.success) {
-      setSuccessMsg('Buyer Registration Successful!');
+      setSuccessMsg(t('buyerRegSuccess'));
       setTimeout(() => {
         onClose();
       }, 1000);
@@ -166,10 +166,10 @@ export const AuthModal = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-amber-300">
-                मूल्य (Moolya) ऑथेंटिकेशन
+                {t('appName')} {t('loginRegister')}
               </h2>
               <p className="text-xs text-emerald-200">
-                किसान एवं खरीदार सुरक्षा पोर्टल
+                {t('tagline')}
               </p>
             </div>
           </div>
@@ -183,26 +183,26 @@ export const AuthModal = ({ isOpen, onClose }) => {
           <button
             onClick={() => { setTab('login'); setErrorMsg(''); setSuccessMsg(''); }}
             className={`flex-1 py-3 text-xs font-bold transition ${
-              tab === 'login' ? 'border-b-2 border-emerald-800 text-emerald-900 bg-white' : 'text-slate-500'
+              tab === 'login' ? 'border-b-2 border-emerald-800 text-emerald-900 bg-white' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            लॉगिन (Login)
+            {t('loginSubmitBtn')}
           </button>
           <button
             onClick={() => { setTab('farmer'); setErrorMsg(''); setSuccessMsg(''); }}
             className={`flex-1 py-3 text-xs font-bold transition ${
-              tab === 'farmer' ? 'border-b-2 border-emerald-800 text-emerald-900 bg-white' : 'text-slate-500'
+              tab === 'farmer' ? 'border-b-2 border-emerald-800 text-emerald-900 bg-white' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            किसान रजिस्ट्रेशन
+            {t('farmerRegisterTitle')}
           </button>
           <button
             onClick={() => { setTab('buyer'); setErrorMsg(''); setSuccessMsg(''); }}
             className={`flex-1 py-3 text-xs font-bold transition ${
-              tab === 'buyer' ? 'border-b-2 border-emerald-800 text-emerald-900 bg-white' : 'text-slate-500'
+              tab === 'buyer' ? 'border-b-2 border-emerald-800 text-emerald-900 bg-white' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            खरीदार रजिस्ट्रेशन
+            {t('buyerRegisterTitle')}
           </button>
         </div>
 
@@ -230,7 +230,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
               {/* Role Selection Option */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  लॉगिन रोल चुनें (Select Login Role):
+                  {t('selectRole')}
                 </label>
                 <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-2xl border border-slate-200">
                   <button
@@ -241,7 +241,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     }`}
                   >
                     <Sprout className="w-3.5 h-3.5" />
-                    <span>किसान</span>
+                    <span>{t('farmerRole')}</span>
                   </button>
                   <button
                     type="button"
@@ -251,7 +251,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     }`}
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>खरीदार</span>
+                    <span>{t('buyerRole')}</span>
                   </button>
                   <button
                     type="button"
@@ -264,7 +264,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     }`}
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>एडमिन</span>
+                    <span>{t('adminRole')}</span>
                   </button>
                 </div>
               </div>
@@ -273,17 +273,17 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 <div className="bg-amber-50 border border-amber-300 p-3 rounded-2xl text-xs font-semibold text-amber-950 space-y-1">
                   <div className="flex items-center space-x-1.5 font-black text-emerald-900">
                     <ShieldCheck className="w-4 h-4 text-emerald-800" />
-                    <span>सुरक्षित एडमिन लॉगिन (Admin Direct Login)</span>
+                    <span>{t('adminOnlyNotice')}</span>
                   </div>
                   <p className="text-[11px] text-slate-700">
-                    सार्वजनिक पंजीकरण की आवश्यकता नहीं है। अपने सुरक्षित एडमिन विवरण से सीधे प्रवेश करें।
+                    {t('adminOnlyDesc')}
                   </p>
                 </div>
               )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  {loginRole === 'ADMIN' ? 'एडमिन फोन / ई-मेल (Phone or Email):' : 'मोबाइल नंबर (Phone Number):'}
+                  {loginRole === 'ADMIN' ? t('adminPhoneEmailLabel') : t('mobileNumberLabel')}
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -292,7 +292,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     required
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value)}
-                    placeholder={loginRole === 'ADMIN' ? 'admin@moolya.com or 9999999999' : '9876543210'}
+                    placeholder={loginRole === 'ADMIN' ? 'admin@moolya.com / 9999999999' : '9876543210'}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none font-semibold"
                   />
                 </div>
@@ -300,7 +300,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  पासवर्ड (Password):
+                  {t('passwordLabel')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -320,7 +320,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 disabled={loading}
                 className={`w-full py-3 ${loginRole === 'ADMIN' ? 'bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black' : 'bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-bold'} rounded-xl text-sm transition shadow`}
               >
-                {loading ? 'प्रोसेसिंग...' : loginRole === 'ADMIN' ? 'एडमिन पोर्टल में प्रवेश करें (Login as Admin)' : 'लॉगिन करें (Login)'}
+                {loading ? t('loggingIn') : t('loginSubmitBtn')}
               </button>
             </form>
           )}
@@ -330,19 +330,19 @@ export const AuthModal = ({ isOpen, onClose }) => {
             <form onSubmit={handleFarmerSubmit} className="space-y-3">
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">पूरा नाम (Full Name):</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('fullNameLabel')}</label>
                 <input
                   type="text"
                   required
                   value={farmerData.fullName}
                   onChange={(e) => setFarmerData({ ...farmerData, fullName: e.target.value })}
                   placeholder="Gurpreet Singh"
-                  className="w-full px-3 py-2 rounded-xl border text-sm"
+                  className="w-full px-3 py-2 rounded-xl border text-sm font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">मोबाइल नंबर (10 Digit Phone):</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('mobileNumberLabel')} (10 digits):</label>
                 <input
                   type="text"
                   required
@@ -356,7 +356,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">राज्य (State):</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('stateLabel')}</label>
                   <input
                     type="text"
                     required
@@ -366,7 +366,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">ज़िला (District):</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('districtLabel')}</label>
                   <input
                     type="text"
                     required
@@ -380,7 +380,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>12-अंकीय आधार नंबर (12-Digit Aadhaar):</span>
+                  <span>{t('aadhaarLabel')}</span>
                 </label>
                 <input
                   type="text"
@@ -394,7 +394,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">पासवर्ड (Password):</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('passwordLabel')}</label>
                 <input
                   type="password"
                   required
@@ -410,7 +410,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 disabled={loading}
                 className="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-bold rounded-xl text-sm transition shadow mt-2"
               >
-                {loading ? 'प्रोसेसिंग...' : 'किसान खाता बनाएँ (Register Farmer)'}
+                {loading ? t('registering') : t('farmerRegisterSubmitBtn')}
               </button>
             </form>
           )}
@@ -420,7 +420,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
             <form onSubmit={handleBuyerSubmit} className="space-y-3">
               
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Account Type:</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('selectRole')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -429,7 +429,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                       buyerType === 'INDIVIDUAL' ? 'bg-emerald-800 text-amber-300 border-emerald-800' : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    Individual / Self
+                    {t('individualBuyer')}
                   </button>
                   <button
                     type="button"
@@ -438,26 +438,26 @@ export const AuthModal = ({ isOpen, onClose }) => {
                       buyerType === 'BUSINESS' ? 'bg-emerald-800 text-amber-300 border-emerald-800' : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    Business / Enterprise
+                    {t('businessBuyer')}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name:</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('fullNameLabel')}</label>
                 <input
                   type="text"
                   required
                   value={buyerData.fullName}
                   onChange={(e) => setBuyerData({ ...buyerData, fullName: e.target.value })}
                   placeholder="Priya Sharma"
-                  className="w-full px-3 py-2 rounded-xl border text-sm"
+                  className="w-full px-3 py-2 rounded-xl border text-sm font-semibold"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number:</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('mobileNumberLabel')}</label>
                   <input
                     type="text"
                     required
@@ -465,11 +465,11 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     value={buyerData.phone}
                     onChange={(e) => setBuyerData({ ...buyerData, phone: e.target.value })}
                     placeholder="9123456789"
-                    className="w-full px-3 py-2 rounded-xl border text-sm"
+                    className="w-full px-3 py-2 rounded-xl border text-sm font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email:</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">{t('emailLabel')}</label>
                   <input
                     type="email"
                     required
@@ -484,7 +484,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
               {buyerType === 'BUSINESS' && (
                 <div className="grid grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Business Name:</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">{t('businessNameLabel')}</label>
                     <input
                       type="text"
                       value={buyerData.businessName}
@@ -494,7 +494,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">GST / Tax ID:</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">{t('gstLabel')}</label>
                     <input
                       type="text"
                       value={buyerData.gstId}
@@ -507,7 +507,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Password:</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">{t('passwordLabel')}</label>
                 <input
                   type="password"
                   required
@@ -523,7 +523,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 disabled={loading}
                 className="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-bold rounded-xl text-sm transition shadow mt-2"
               >
-                {loading ? 'Processing...' : 'Register Buyer Account'}
+                {loading ? t('registering') : t('buyerRegisterSubmitBtn')}
               </button>
             </form>
           )}

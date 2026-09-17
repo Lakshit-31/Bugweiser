@@ -49,16 +49,20 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
   const [upiId, setUpiId] = useState(user?.phone ? `${user.phone}@upi` : 'buyer@upi');
   const [paying, setPaying] = useState(false);
 
+  // Fetch produce listings on initial load and when filters/search change (NO periodic polling)
   useEffect(() => {
     fetchProduceListings();
+  }, [user, searchQuery, selectedGrade]);
+
+  // Buyer orders and transactions data fetching and interval
+  useEffect(() => {
     if (user) {
       fetchBuyerOrders();
       fetchBuyerTransactions();
     }
 
-    // Auto-refresh interval fallback so Buyer Dashboard is always up-to-date without page reloads
+    // Auto-refresh interval fallback for buyer orders & transactions
     const interval = setInterval(() => {
-      fetchProduceListings();
       if (user) {
         fetchBuyerOrders();
         fetchBuyerTransactions();
@@ -66,7 +70,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [user, activeTab, searchQuery, selectedGrade, refreshKey]);
+  }, [user, activeTab, refreshKey]);
 
   const fetchProduceListings = async () => {
     setLoading(true);
@@ -107,7 +111,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
 
   const handleOpenDealModal = (listing) => {
     if (!user) {
-      alert('सौदा का अनुरोध करने के लिए कृपया लॉगिन करें। (Please login to request deal)');
+      alert(t('pleaseLogin'));
       if (onOpenAuth) onOpenAuth();
       return;
     }
@@ -133,12 +137,17 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
         quantityQuintals: qtyQuintals,
         requestedDeliveryDate: buyerRequestedDate
       });
-      alert(`अनुरोध किसान ${selectedDealListing.farmerName} को भेज दिया गया है! मात्रा: ${qty} ${unit === 'KG' ? 'Kg (किलो)' : 'क्विंटल'}, आपकी पसंदीदा डिलीवरी तारीख: ${buyerRequestedDate}`);
+      alert(t('dealRequestSentAlert', {
+        farmer: selectedDealListing.farmerName,
+        qty: qty,
+        unit: unit === 'KG' ? t('kgUnit') : t('quintalUnit'),
+        date: buyerRequestedDate
+      }));
       setSelectedDealListing(null);
       triggerRefresh();
       fetchProduceListings();
     } catch (err) {
-      alert(err.response?.data?.message || 'ऑर्डर अनुरोध भेजने में विफल।');
+      alert(err.response?.data?.message || t('errorOccurred'));
     } finally {
       setSubmittingDeal(false);
     }
@@ -159,15 +168,19 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
       });
 
       const amountVal = payModalOrder.totalAmount;
-      speakText(`भुगतान सफल रहा! ₹${amountVal} किसान ${payModalOrder.farmerName} को भेज दिए गए हैं।`, 'hi');
-      alert(`🎉 डेमो भुगतान सफल हुआ! ₹${amountVal} किसान ${payModalOrder.farmerName} को हस्तांतरित कर दिए गए। (Txn: ${res.data.transactionId})`);
+      speakText(`${t('paymentCompleteLabel')}. ₹${amountVal} -> ${payModalOrder.farmerName}`, lang);
+      alert(t('paymentSuccessAlert', {
+        amount: amountVal,
+        farmer: payModalOrder.farmerName,
+        txn: res.data.transactionId
+      }));
 
       setPayModalOrder(null);
       triggerRefresh();
       fetchBuyerOrders();
       fetchBuyerTransactions();
     } catch (err) {
-      alert(err.response?.data?.message || 'भुगतान प्रक्रिया में त्रुटि हुई।');
+      alert(err.response?.data?.message || t('errorOccurred'));
     } finally {
       setPaying(false);
     }
@@ -175,7 +188,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
 
   const handleVoiceRequirement = () => {
     if (!user) {
-      alert('कृपया वॉइस असिस्टेंट का उपयोग करने के लिए लॉगिन करें! (Please login to use Voice Assistant)');
+      alert(t('pleaseLogin'));
       if (onOpenAuth) onOpenAuth();
       return;
     }
@@ -184,7 +197,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
       (transcript) => {
         setIsListeningReq(false);
         setRequirementText(transcript);
-        speakText(`आवश्यकता प्राप्त हुई: ${transcript}`, lang);
+        speakText(`${t('voiceRecordedAck', { text: transcript })}`, lang);
       },
       () => setIsListeningReq(false),
       lang
@@ -208,10 +221,10 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
         unit: parsed.unit,
         displayQuantity: parsed.displayQuantity
       });
-      setReqSuccessMsg('आपकी आवश्यकता सफलतापूर्वक पोस्ट कर दी गई है! किसानों को मैच स्कोर के आधार पर सूचित किया जाएगा।');
+      setReqSuccessMsg(t('requirementSuccessMsg'));
       setRequirementText('');
     } catch (err) {
-      alert('आवश्यकता सबमिट करने में विफल।');
+      alert(t('errorOccurred'));
     }
   };
 
@@ -232,10 +245,10 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1">
-            सत्यापित किसान उपज खोज (Verified Produce Discovery)
+            {t('searchProduceTitle')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-            गुणवत्ता ग्रेड A, B, C एवं विश्वास मैच स्कोर (Trust Match Score) के साथ सीधे किसानों से संपर्क करें।
+            {t('buyerTagline')}
           </p>
         </div>
 
@@ -244,38 +257,38 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
           <button
             onClick={() => setActiveTab('search')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs transition ${
-              activeTab === 'search' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300'
+              activeTab === 'search' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            फसल खोजें (Search Matrix)
+            {t('searchMatrixTab')}
           </button>
 
           <button
             onClick={() => setActiveTab('postRequirement')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs transition ${
-              activeTab === 'postRequirement' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300'
+              activeTab === 'postRequirement' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            {t('postRequirement')} (Voice/Chat)
+            {t('postRequirementTab')}
           </button>
 
           <button
             onClick={() => setActiveTab('orders')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs transition ${
-              activeTab === 'orders' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300'
+              activeTab === 'orders' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            {t('myOrders')} ({orders.length})
+            {t('myOrdersTab', { count: orders.length })}
           </button>
 
           <button
             onClick={() => setActiveTab('transactions')}
             className={`px-4 py-2.5 rounded-xl font-bold text-xs transition flex items-center space-x-1.5 ${
-              activeTab === 'transactions' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300'
+              activeTab === 'transactions' ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
             <Receipt className="w-3.5 h-3.5" />
-            <span>लेनदेन इतिहास ({transactions.length})</span>
+            <span>{t('transactionsHistoryTab', { count: transactions.length })}</span>
           </button>
         </div>
       </div>
@@ -294,7 +307,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="फसल का नाम खोजें (उदा: गेहूँ, Wheat, Basmati Rice, Potato)..."
+                placeholder={t('searchCropPlaceholder')}
                 className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none text-sm font-medium"
               />
             </div>
@@ -302,16 +315,16 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
             {/* Quality Grade Filter */}
             <div className="flex items-center space-x-2 w-full md:w-auto">
               <Filter className="w-4 h-4 text-emerald-800" />
-              <span className="text-xs font-bold text-slate-600">ग्रेड फ़िल्टर:</span>
+              <span className="text-xs font-bold text-slate-600">{t('gradeFilterLabel')}</span>
               <select
                 value={selectedGrade}
                 onChange={(e) => setSelectedGrade(e.target.value)}
-                className="p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                className="p-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-600 focus:outline-none cursor-pointer"
               >
-                <option value="">सभी ग्रेड (All Grades)</option>
-                <option value="GRADE_A">Grade A (Organic / Fresh)</option>
-                <option value="GRADE_B">Grade B (Standard Pesticides)</option>
-                <option value="GRADE_C">Grade C (Chemical / Stored)</option>
+                <option value="">{t('allGradesOption')}</option>
+                <option value="GRADE_A">{t('gradeA')}</option>
+                <option value="GRADE_B">{t('gradeB')}</option>
+                <option value="GRADE_C">{t('gradeC')}</option>
               </select>
             </div>
 
@@ -319,12 +332,12 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
 
           {/* Results Grid */}
           {loading ? (
-            <div className="text-center py-12 text-slate-500 font-bold">खोज रहा है... (Searching listings...)</div>
+            <div className="text-center py-12 text-slate-500 font-bold">{t('searchingListings')}</div>
           ) : results.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm space-y-3">
               <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
-              <h3 className="text-lg font-bold text-slate-700">कोई फसल मैच नहीं हुई</h3>
-              <p className="text-xs text-slate-500">फिल्टर बदलें या अपनी आवश्यकता पोस्ट करें।</p>
+              <h3 className="text-lg font-bold text-slate-700">{t('noCropMatchTitle')}</h3>
+              <p className="text-xs text-slate-500">{t('noCropMatchDesc')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -342,8 +355,8 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                             listing.assignedGrade === 'GRADE_A' ? 'bg-emerald-600' :
                             listing.assignedGrade === 'GRADE_B' ? 'bg-amber-500' : 'bg-red-500'
                           }`}>
-                            {listing.assignedGrade === 'GRADE_A' ? 'Grade A (Organic)' :
-                             listing.assignedGrade === 'GRADE_B' ? 'Grade B (Standard)' : 'Grade C (Chemical)'}
+                            {listing.assignedGrade === 'GRADE_A' ? t('gradeA') :
+                             listing.assignedGrade === 'GRADE_B' ? t('gradeB') : t('gradeC')}
                           </div>
                         }
                       />
@@ -351,7 +364,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       {/* BUYER TRUST MATCH SCORE OVERLAY */}
                       <div className="absolute top-3 right-3 z-10 bg-emerald-950/90 text-amber-300 px-3 py-1 rounded-full text-xs font-extrabold shadow border border-amber-400/50 flex items-center space-x-1">
                         <Award className="w-3.5 h-3.5 text-amber-400" />
-                        <span>Trust Match: {buyerTrustMatchScore}%</span>
+                        <span>{t('trustMatchLabel', { score: buyerTrustMatchScore })}</span>
                       </div>
                     </div>
 
@@ -362,7 +375,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       <div>
                         <div className="flex justify-between items-baseline">
                           <h3 className="text-xl font-bold text-slate-900">{listing.cropName}</h3>
-                          <span className="text-lg font-black text-emerald-700">₹{listing.pricePerQuintal}/क्विंटल</span>
+                          <span className="text-lg font-black text-emerald-700">₹{listing.pricePerQuintal}/{t('quintalUnit')}</span>
                         </div>
                         <p className="text-xs text-slate-500 flex items-center space-x-1 mt-1">
                           <MapPin className="w-3.5 h-3.5 text-emerald-600" />
@@ -377,7 +390,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                           <span className="font-extrabold text-slate-900">{listing.farmerName}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-emerald-800 font-bold">फोन नंबर:</span>
+                          <span className="text-emerald-800 font-bold">{t('farmerPhoneLabel')}</span>
                           <span className="font-mono font-bold text-slate-900 flex items-center space-x-1">
                             <Phone className="w-3 h-3 text-emerald-700 inline" />
                             <span>{listing.farmerPhone}</span>
@@ -388,18 +401,18 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       {/* Transparency Net Earnings Breakdown */}
                       <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs space-y-1.5">
                         <span className="font-bold text-slate-700 block border-b border-slate-200 pb-1">
-                          पारदर्शिता निवल कमाई (Net Earnings Breakdown):
+                          {t('netEarningsBreakdownTitle')}
                         </span>
                         <div className="flex justify-between text-slate-600">
-                          <span>कुल मूल्य (Gross Total):</span>
+                          <span>{t('grossTotalLabel')}</span>
                           <span className="font-bold">₹{netEarningsBreakdown?.grossTotal}</span>
                         </div>
                         <div className="flex justify-between text-slate-600">
-                          <span>अनुमानित परिवहन लागत (Est. Transport):</span>
+                          <span>{t('estTransportCostLabel')}</span>
                           <span className="font-semibold text-amber-700">₹{netEarningsBreakdown?.estimatedTransportCost}</span>
                         </div>
                         <div className="flex justify-between text-slate-800 font-bold border-t border-slate-200 pt-1">
-                          <span>किसान निवल आय (Net Profit):</span>
+                          <span>{t('netFarmerEarningsLabel')}</span>
                           <span className="font-black text-emerald-700">₹{netEarningsBreakdown?.netFarmerEarnings}</span>
                         </div>
                       </div>
@@ -434,8 +447,8 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">अपनी फसल आवश्यकता पोस्ट करें</h2>
-              <p className="text-xs text-slate-500">वॉइस एआई या टेक्स्ट में लिखकर आवश्यकता साझा करें (उदा: 50 क्विंटल ग्रेड-ए गेहूँ)</p>
+              <h2 className="text-xl font-bold text-slate-900">{t('postRequirementHeading')}</h2>
+              <p className="text-xs text-slate-500">{t('postRequirementSubheading')}</p>
             </div>
           </div>
 
@@ -450,7 +463,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-xs font-bold text-slate-700 uppercase">
-                  आवश्यकता विवरण (Voice / Text):
+                  {t('requirementVoiceTextLabel')}
                 </label>
                 <button
                   type="button"
@@ -460,7 +473,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                   }`}
                 >
                   <Mic className="w-3.5 h-3.5" />
-                  <span>{isListeningReq ? 'सुन रहा है...' : 'बोलकर लिखें'}</span>
+                  <span>{isListeningReq ? t('listeningText') : t('speakToWriteBtn')}</span>
                 </button>
               </div>
 
@@ -468,7 +481,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 rows={4}
                 value={requirementText}
                 onChange={(e) => setRequirementText(e.target.value)}
-                placeholder='उदा: "मुझे पंजाब में 50 क्विंटल ग्रेड-ए गेहूँ की आवश्यकता है। कटाई की तारीख 15 अप्रैल के बाद हो।"'
+                placeholder={t('requirementPlaceholder')}
                 className="w-full p-4 rounded-2xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
             </div>
@@ -477,7 +490,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
               type="submit"
               className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-extrabold rounded-2xl text-sm transition shadow"
             >
-              आवश्यकता सबमिट करें (Submit Requirement)
+              {t('submitRequirementBtn')}
             </button>
           </form>
         </div>
@@ -489,7 +502,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
           {orders.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm space-y-3">
               <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
-              <h3 className="text-base font-bold text-slate-700">कोई ऑर्डर इतिहास नहीं है</h3>
+              <h3 className="text-base font-bold text-slate-700">{t('noOrderHistory')}</h3>
             </div>
           ) : (
             orders.map(ord => (
@@ -500,38 +513,38 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       ord.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
                       ord.status === 'REQUESTED' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-red-100 text-red-800'
                     }`}>
-                      {ord.status === 'ACCEPTED' ? 'स्वीकृत (Confirmed Deal)' : ord.status}
+                      {ord.status === 'ACCEPTED' ? t('confirmedDealBadge') : ord.status}
                     </span>
-                    <span className="text-xs text-slate-400">Order #{ord.id?.substring(0, 8)}</span>
+                    <span className="text-xs text-slate-400">{t('orderIdLabel', { id: ord.id?.substring(0, 8) })}</span>
 
                     {ord.paymentStatus === 'PAID' && (
                       <span className="bg-emerald-600 text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full shadow flex items-center space-x-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>भुगतान संपन्न ({ord.paymentMethod})</span>
+                        <span>{t('paymentDoneBadge', { method: ord.paymentMethod })}</span>
                       </span>
                     )}
                   </div>
 
-                  <h4 className="text-lg font-extrabold text-slate-800">{ord.cropName} - {ord.displayQuantity || ord.quantityQuintals} {ord.unit === 'KG' ? 'Kg (किलो)' : 'क्विंटल'}</h4>
+                  <h4 className="text-lg font-extrabold text-slate-800">{ord.cropName} - {ord.displayQuantity || ord.quantityQuintals} {ord.unit === 'KG' ? t('kgUnit') : t('quintalUnit')}</h4>
                   <p className="text-xs text-slate-600">
-                    किसान: <span className="font-bold text-slate-800">{ord.farmerName}</span> ({ord.farmerPhone})
+                    {t('farmerRole')}: <span className="font-bold text-slate-800">{ord.farmerName}</span> ({ord.farmerPhone})
                   </p>
                   
                   {/* Delivery Dates & Delay Reason Display */}
                   <div className="flex flex-wrap gap-2 pt-1 text-xs">
                     {ord.requestedDeliveryDate && (
                       <span className="bg-slate-100 text-slate-700 font-semibold px-2.5 py-1 rounded-lg border border-slate-200">
-                        📅 आपकी पसंदीदा तारीख: <strong>{ord.requestedDeliveryDate}</strong>
+                        {t('yourPreferredDateLabel', { date: ord.requestedDeliveryDate })}
                       </span>
                     )}
                     {ord.expectedDeliveryDate && (
                       <span className="bg-emerald-50 text-emerald-800 font-bold px-2.5 py-1 rounded-lg border border-emerald-200">
-                        🚚 किसान स्वीकृत डिलीवरी तारीख: <strong>{ord.expectedDeliveryDate}</strong>
+                        {t('farmerConfirmedDateLabel', { date: ord.expectedDeliveryDate })}
                       </span>
                     )}
                     {ord.delayReason && (
                       <span className="bg-amber-100 text-amber-950 font-extrabold px-2.5 py-1 rounded-lg border border-amber-300">
-                        ⚠️ देरी की वजह: {ord.delayReason}
+                        {t('delayReasonLabel', { reason: ord.delayReason })}
                       </span>
                     )}
                   </div>
@@ -547,7 +560,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-amber-300 font-bold text-xs rounded-xl shadow transition flex items-center space-x-1"
                     >
                       <MessageSquare className="w-3.5 h-3.5 text-amber-300" />
-                      <span>💬 चैट करें</span>
+                      <span>{t('chatBtn')}</span>
                     </button>
 
                     <button
@@ -556,7 +569,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-xs rounded-xl shadow-sm transition flex items-center space-x-1"
                     >
                       <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
-                      <span>🚨 रिपोर्ट</span>
+                      <span>{t('reportBtn')}</span>
                     </button>
 
                     {/* Payment Button / Status Badge */}
@@ -564,7 +577,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       <div>
                         {ord.paymentStatus === 'PAID' ? (
                           <div className="bg-emerald-50 border border-emerald-300 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-900 text-right space-y-0.5">
-                            <span className="text-emerald-700 block">✅ भुगतान पूर्ण</span>
+                            <span className="text-emerald-700 block">{t('paymentCompleteLabel')}</span>
                           </div>
                         ) : (
                           <button
@@ -576,7 +589,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                             className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-emerald-950 font-black text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1 border border-amber-300 animate-pulse"
                           >
                             <CreditCard className="w-4 h-4 stroke-[2.5]" />
-                            <span>💳 भुगतान (Pay ₹{ord.totalAmount})</span>
+                            <span>{t('payBtn', { amount: ord.totalAmount })}</span>
                           </button>
                         )}
                       </div>
@@ -594,19 +607,19 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
         <div className="space-y-4">
           <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div>
-              <h3 className="text-lg font-bold text-slate-900">भुगतान एवं लेनदेन इतिहास (Transaction History)</h3>
-              <p className="text-xs text-slate-500">खरीदार द्वारा किसान को किए गए सभी सफल भुगतान रिकॉर्ड</p>
+              <h3 className="text-lg font-bold text-slate-900">{t('transactionHistoryTitle')}</h3>
+              <p className="text-xs text-slate-500">{t('transactionHistorySub')}</p>
             </div>
             <span className="bg-emerald-100 text-emerald-900 font-black text-xs px-3 py-1 rounded-full border border-emerald-300">
-              कुल {transactions.length} सफल भुगतान
+              {t('totalSuccessfulPayments', { count: transactions.length })}
             </span>
           </div>
 
           {transactions.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm space-y-3">
               <Receipt className="w-12 h-12 text-slate-300 mx-auto" />
-              <h3 className="text-base font-bold text-slate-700">कोई लेनदेन इतिहास नहीं है</h3>
-              <p className="text-xs text-slate-500">ऑर्डर स्वीकार होने के बाद भुगतान पूरा करने पर इतिहास यहाँ दिखाई देगा।</p>
+              <h3 className="text-base font-bold text-slate-700">{t('noTransactionHistory')}</h3>
+              <p className="text-xs text-slate-500">{t('noTransactionHistoryDesc')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -617,22 +630,22 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       <span className="bg-emerald-100 text-emerald-800 text-[11px] font-black uppercase px-2.5 py-0.5 rounded-md border border-emerald-300">
                         {txn.status || 'SUCCESSFUL'} ({txn.paymentMethod})
                       </span>
-                      <h4 className="text-base font-extrabold text-slate-900 mt-1">{txn.cropName} - {txn.quantityQuintals} क्विंटल</h4>
+                      <h4 className="text-base font-extrabold text-slate-900 mt-1">{txn.cropName} - {txn.quantityQuintals} {t('quintalUnit')}</h4>
                     </div>
                     <span className="text-xl font-black text-emerald-700">₹{txn.amount}</span>
                   </div>
 
                   <div className="space-y-1 text-xs text-slate-600">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">किसान प्राप्तकर्ता:</span>
+                      <span className="text-slate-400">{t('farmerRecipientLabel')}</span>
                       <span className="font-bold text-slate-800">{txn.farmerName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">ट्रांजैक्शन आईडी:</span>
+                      <span className="text-slate-400">{t('transactionIdLabel')}</span>
                       <span className="font-mono text-slate-800 font-semibold">{txn.transactionId}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">दिनांक एवं समय:</span>
+                      <span className="text-slate-400">{t('dateTimeLabel')}</span>
                       <span className="font-semibold text-slate-700">{txn.createdAt?.replace('T', ' ')?.substring(0, 19)}</span>
                     </div>
                   </div>
@@ -649,8 +662,8 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-5 sm:p-6 space-y-4 border border-slate-200 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <div>
-                <h3 className="text-lg font-extrabold text-slate-900">सौदा अनुरोध (Deal Request)</h3>
-                <p className="text-xs text-slate-500">किसान {selectedDealListing.farmerName} - {selectedDealListing.cropName}</p>
+                <h3 className="text-lg font-extrabold text-slate-900">{t('dealRequestModalTitle')}</h3>
+                <p className="text-xs text-slate-500">{t('dealRequestFarmerCrop', { farmer: selectedDealListing.farmerName, crop: selectedDealListing.cropName })}</p>
               </div>
               <button onClick={() => setSelectedDealListing(null)} className="text-slate-400 hover:text-slate-600 font-bold text-lg">
                 ✕
@@ -661,7 +674,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
             <div className="space-y-1">
               <div className="flex justify-between items-center text-xs">
                 <label className="font-bold text-slate-700 uppercase">
-                  मात्रा दर्ज करें:
+                  {t('enterQuantityLabel')}
                 </label>
                 <div className="flex bg-slate-100 p-0.5 rounded-lg text-xs font-bold border border-slate-200">
                   <button
@@ -671,7 +684,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       buyerRequestedUnit === 'QUINTAL' ? 'bg-emerald-800 text-amber-300 shadow' : 'text-slate-600'
                     }`}
                   >
-                    क्विंटल (Quintal)
+                    {t('quintalUnit')}
                   </button>
                   <button
                     type="button"
@@ -680,7 +693,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       buyerRequestedUnit === 'KG' ? 'bg-emerald-800 text-amber-300 shadow' : 'text-slate-600'
                     }`}
                   >
-                    किलो (Kg)
+                    {t('kgUnit')}
                   </button>
                 </div>
               </div>
@@ -693,14 +706,14 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 className="w-full p-3 rounded-2xl border border-slate-300 text-sm font-bold focus:ring-2 focus:ring-emerald-600 focus:outline-none"
               />
               <span className="text-slate-500 text-[11px] block text-right">
-                किसान उपलब्ध: {selectedDealListing.displayQuantity || selectedDealListing.quantityQuintals} {selectedDealListing.unit === 'KG' ? 'Kg' : 'क्विंटल'}
+                {t('availableQuantity')} {selectedDealListing.displayQuantity || selectedDealListing.quantityQuintals} {selectedDealListing.unit === 'KG' ? t('kgUnit') : t('quintalUnit')}
               </span>
             </div>
 
             {/* Requested Delivery Date Input */}
             <div className="space-y-1">
               <label className="block text-xs font-bold text-slate-700 uppercase">
-                अपेक्षित डिलीवरी तारीख चुनें (Expected Delivery Date):
+                {t('expectedDeliveryDateModalLabel')}
               </label>
               <input
                 type="date"
@@ -713,9 +726,9 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
             {/* Calculated Total Deal Value */}
             <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl flex justify-between items-center text-xs">
               <div>
-                <span className="text-slate-500 font-bold block">कुल अनुमानित सौदा मूल्य:</span>
+                <span className="text-slate-500 font-bold block">{t('totalEstimatedDealValue')}</span>
                 <span className="text-slate-600 font-semibold">
-                  {buyerRequestedQuantity || 0} {buyerRequestedUnit === 'KG' ? 'Kg' : 'क्विंटल'} × ₹{selectedDealListing.pricePerQuintal}/क्विंटल
+                  {buyerRequestedQuantity || 0} {buyerRequestedUnit === 'KG' ? t('kgUnit') : t('quintalUnit')} × ₹{selectedDealListing.pricePerQuintal}/{t('quintalUnit')}
                 </span>
               </div>
               <span className="text-xl font-black text-emerald-800">
@@ -733,7 +746,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 onClick={() => setSelectedDealListing(null)}
                 className="flex-1 py-3 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl"
               >
-                रद्द करें
+                {t('cancelBtn')}
               </button>
               <button
                 type="button"
@@ -741,7 +754,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 disabled={submittingDeal}
                 className="flex-2 py-3 px-6 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-extrabold text-xs rounded-xl shadow"
               >
-                {submittingDeal ? 'अनुरोध भेजा जा रहा है...' : 'सौदा का अनुरोध भेजें'}
+                {submittingDeal ? t('sendingRequestBtn') : t('sendDealRequestBtn')}
               </button>
             </div>
           </div>
@@ -761,10 +774,10 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-extrabold text-amber-300">
-                    Moolya सुरक्षित पेमेंट गेटवे (Demo)
+                    {t('paymentGatewayTitle')}
                   </h3>
                   <p className="text-xs text-emerald-200">
-                    किसान {payModalOrder.farmerName} को सीधी ऑनलाइन भुगतान राशि
+                    {t('paymentGatewaySub', { farmer: payModalOrder.farmerName })}
                   </p>
                 </div>
               </div>
@@ -779,19 +792,19 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
               {/* Summary Box */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex justify-between items-center">
                 <div>
-                  <span className="text-xs text-slate-400 uppercase font-bold block">ऑर्डर विवरण</span>
-                  <h4 className="text-base font-extrabold text-slate-800">{payModalOrder.cropName} - {payModalOrder.quantityQuintals} क्विंटल</h4>
-                  <span className="text-xs text-slate-500">किसान: {payModalOrder.farmerName}</span>
+                  <span className="text-xs text-slate-400 uppercase font-bold block">{t('orderDetailsSummary')}</span>
+                  <h4 className="text-base font-extrabold text-slate-800">{payModalOrder.cropName} - {payModalOrder.quantityQuintals} {t('quintalUnit')}</h4>
+                  <span className="text-xs text-slate-500">{t('farmerRole')}: {payModalOrder.farmerName}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-slate-400 uppercase font-bold block">भुगतान कुल राशि</span>
+                  <span className="text-xs text-slate-400 uppercase font-bold block">{t('totalPaymentAmount')}</span>
                   <span className="text-2xl font-black text-emerald-700">₹{payModalOrder.totalAmount}</span>
                 </div>
               </div>
 
               {/* Payment Method Tabs */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 uppercase block">भुगतान माध्यम चुनें (Select Payment Method):</label>
+                <label className="text-xs font-bold text-slate-700 uppercase block">{t('selectPaymentMethodTitle')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -801,7 +814,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                     }`}
                   >
                     <QrCode className="w-4 h-4" />
-                    <span>📱 UPI (GPay / PhonePe / BHIM)</span>
+                    <span>{t('upiMethodBtn')}</span>
                   </button>
 
                   <button
@@ -812,7 +825,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                     }`}
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span>💳 Debit / Credit Card</span>
+                    <span>{t('cardMethodBtn')}</span>
                   </button>
                 </div>
               </div>
@@ -821,7 +834,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
               {payMethod === 'UPI' && (
                 <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">आपकी UPI ID दर्ज करें:</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{t('enterUpiLabel')}</label>
                     <input
                       type="text"
                       value={upiId}
@@ -833,8 +846,8 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                   <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center space-x-2">
                     <QrCode className="w-8 h-8 text-emerald-700 flex-shrink-0" />
                     <div>
-                      <span className="font-bold text-slate-800 block">डेमो क्यूआर कोड सक्रिय</span>
-                      <span>एक-क्लिक डेमो पेमेंट बिना असली पैसों के तुरंत पूरा हो जाएगा।</span>
+                      <span className="font-bold text-slate-800 block">{t('demoQrActiveTitle')}</span>
+                      <span>{t('demoQrActiveDesc')}</span>
                     </div>
                   </div>
                 </div>
@@ -844,7 +857,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
               {payMethod === 'CARD' && (
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">कार्ड संख्या (Card Number):</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{t('cardNumberLabel')}</label>
                     <input
                       type="text"
                       value={cardNumber}
@@ -855,7 +868,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">एक्सपायरी (MM/YY):</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">{t('cardExpiryLabel')}</label>
                       <input
                         type="text"
                         value={cardExpiry}
@@ -864,7 +877,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">CVV:</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">{t('cardCvvLabel')}</label>
                       <input
                         type="password"
                         value={cardCvv}
@@ -876,7 +889,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">कार्डधारक का नाम (Cardholder Name):</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{t('cardHolderLabel')}</label>
                     <input
                       type="text"
                       value={cardHolder}
@@ -898,7 +911,7 @@ export const BuyerDashboard = ({ onOpenAuth }) => {
                 className="w-full py-4 bg-emerald-800 hover:bg-emerald-900 text-amber-300 font-extrabold text-base rounded-2xl shadow-xl transition flex items-center justify-center space-x-2"
               >
                 <CheckCircle2 className="w-6 h-6 text-amber-300" />
-                <span>{paying ? 'पेमेंट प्रोसेस हो रहा है...' : `पेमेंट पूरा करें (Pay ₹${payModalOrder.totalAmount} Demo)`}</span>
+                <span>{paying ? t('processingPaymentBtn') : t('completePaymentBtn', { amount: payModalOrder.totalAmount })}</span>
               </button>
             </div>
 
