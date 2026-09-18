@@ -77,20 +77,20 @@ export const AuthModal = ({ isOpen, onClose }) => {
     setSuccessMsg('');
 
     // Client-side Validation Checks
-    if (!farmerData.fullName.trim()) {
-      setErrorMsg(t('fullNameLabel'));
+    if (!farmerData.fullName || !farmerData.fullName.trim()) {
+      setErrorMsg('कृपया पूरा नाम दर्ज करें (Please enter full name).');
       return;
     }
     if (!/^[0-9]{10}$/.test(farmerData.phone.trim())) {
-      setErrorMsg(t('mobileNumberLabel') + ' (10 digits)');
+      setErrorMsg('कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें (Phone number must be 10 digits).');
       return;
     }
     if (!/^[0-9]{12}$/.test(farmerData.aadhaar.trim())) {
-      setErrorMsg(t('aadhaarLabel'));
+      setErrorMsg('कृपया 12 अंकों का वैध आधार नंबर दर्ज करें (Aadhaar number must be 12 digits).');
       return;
     }
-    if (farmerData.password.length < 6) {
-      setErrorMsg(t('passwordLabel'));
+    if (!farmerData.password || farmerData.password.length < 6) {
+      setErrorMsg('पासवर्ड कम से कम 6 अक्षरों का होना चाहिए (Password must be at least 6 characters).');
       return;
     }
 
@@ -121,12 +121,20 @@ export const AuthModal = ({ isOpen, onClose }) => {
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!/^[0-9]{10}$/.test(buyerData.phone.trim())) {
-      setErrorMsg(t('mobileNumberLabel') + ' (10 digits)');
+    if (!buyerData.fullName || !buyerData.fullName.trim()) {
+      setErrorMsg('कृपया पूरा नाम दर्ज करें (Please enter full name).');
       return;
     }
-    if (buyerData.password.length < 6) {
-      setErrorMsg(t('passwordLabel'));
+    if (!/^[0-9]{10}$/.test(buyerData.phone.trim())) {
+      setErrorMsg('कृपया 10 अंकों का वैध मोबाइल नंबर दर्ज करें (Phone number must be 10 digits).');
+      return;
+    }
+    if (!buyerData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerData.email.trim())) {
+      setErrorMsg('कृपया वैध ईमेल पता दर्ज करें (Please enter a valid email address).');
+      return;
+    }
+    if (!buyerData.password || buyerData.password.length < 6) {
+      setErrorMsg('पासवर्ड कम से कम 6 अक्षरों का होना चाहिए (Password must be at least 6 characters).');
       return;
     }
 
@@ -137,10 +145,11 @@ export const AuthModal = ({ isOpen, onClose }) => {
       email: buyerData.email.trim(),
       password: buyerData.password,
       buyerType,
-      businessName: buyerData.businessName,
-      gstId: buyerData.gstId,
-      state: buyerData.state,
-      district: buyerData.district
+      businessName: buyerData.businessName ? buyerData.businessName.trim() : '',
+      gstId: buyerData.gstId ? buyerData.gstId.trim() : '',
+      state: buyerData.state || 'Delhi',
+      district: buyerData.district || 'New Delhi',
+      preferredLanguage: lang || 'en'
     });
     setLoading(false);
 

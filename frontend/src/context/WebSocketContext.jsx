@@ -19,7 +19,7 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const rawBase = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    const rawBase = ((import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')) || window.location.origin;
     const wsUrl = rawBase.startsWith('http') ? `${rawBase}/ws-moolya` : 'http://localhost:8080/ws-moolya';
     const socket = new SockJS(wsUrl);
     const stompClient = new Client({

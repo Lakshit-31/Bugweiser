@@ -34,23 +34,38 @@ public class AuthService {
     }
 
     public AuthResponse registerFarmer(RegisterFarmerRequest req) {
-        if (userRepository.existsByPhone(req.getPhone())) {
-            throw new RuntimeException("Phone number already registered: " + req.getPhone());
+        String phone = req.getPhone() != null ? req.getPhone().trim() : "";
+        if (userRepository.existsByPhone(phone)) {
+            throw new RuntimeException("Phone number already registered: " + phone);
         }
 
+        String rawAadhaar = req.getAadhaar() != null ? req.getAadhaar().trim() : "";
+        String encryptedAadhaar = aadhaarEncryptionService.encryptAadhaarAES(rawAadhaar);
+        if (encryptedAadhaar != null && userRepository.existsByAadhaar(encryptedAadhaar)) {
+            throw new RuntimeException("Aadhaar number is already registered with another account: " + rawAadhaar);
+        }
+
+        String nowStr = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         User user = new User();
-        user.setFullName(req.getFullName());
-        user.setPhone(req.getPhone());
+        user.setFullName(req.getFullName() != null ? req.getFullName().trim() : "");
+        user.setPhone(phone);
         user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setAadhaar(aadhaarEncryptionService.encryptAadhaarAES(req.getAadhaar()));
+        user.setAadhaar(encryptedAadhaar);
         user.setRole(Role.ROLE_FARMER);
+        user.setAccountStatus("ACTIVE");
+        user.setSuspiciousStatus("NORMAL");
         user.setPreferredLanguage(req.getPreferredLanguage() != null ? req.getPreferredLanguage() : "hi");
-        user.setLocation(new Location(req.getDistrict(), req.getState()));
+        user.setLocation(new Location(
+                req.getDistrict() != null ? req.getDistrict().trim() : "Ludhiana",
+                req.getState() != null ? req.getState().trim() : "Punjab"
+        ));
+        user.setCreatedAt(nowStr);
+        user.setUpdatedAt(nowStr);
 
         User saved = userRepository.save(user);
 
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getPhone(), req.getPassword())
+                new UsernamePasswordAuthenticationToken(phone, req.getPassword())
         );
         String token = tokenProvider.generateToken(auth);
 
@@ -58,27 +73,40 @@ public class AuthService {
     }
 
     public AuthResponse registerBuyer(RegisterBuyerRequest req) {
-        if (userRepository.existsByPhone(req.getPhone())) {
-            throw new RuntimeException("Phone number already registered: " + req.getPhone());
+        String phone = req.getPhone() != null ? req.getPhone().trim() : "";
+        if (userRepository.existsByPhone(phone)) {
+            throw new RuntimeException("Phone number already registered: " + phone);
         }
 
+        String email = req.getEmail() != null ? req.getEmail().trim() : "";
+        if (!email.isEmpty() && userRepository.existsByEmail(email)) {
+            throw new RuntimeException("Email address already registered: " + email);
+        }
+
+        String nowStr = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         User user = new User();
-        user.setFullName(req.getFullName());
-        user.setPhone(req.getPhone());
-        user.setEmail(req.getEmail());
+        user.setFullName(req.getFullName() != null ? req.getFullName().trim() : "");
+        user.setPhone(phone);
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(req.getPassword()));
         user.setRole(Role.ROLE_BUYER);
-        user.setBuyerType(req.getBuyerType());
-        user.setBusinessName(req.getBusinessName());
-        user.setGstId(req.getGstId());
+        user.setBuyerType(req.getBuyerType() != null ? req.getBuyerType() : com.moolya.model.BuyerType.INDIVIDUAL);
+        user.setBusinessName(req.getBusinessName() != null ? req.getBusinessName().trim() : null);
+        user.setGstId(req.getGstId() != null ? req.getGstId().trim() : null);
+        user.setAccountStatus("ACTIVE");
+        user.setSuspiciousStatus("NORMAL");
         user.setPreferredLanguage(req.getPreferredLanguage() != null ? req.getPreferredLanguage() : "en");
-        user.setLocation(new Location(req.getDistrict() != null ? req.getDistrict() : "Central", 
-                                      req.getState() != null ? req.getState() : "Punjab"));
+        user.setLocation(new Location(
+                req.getDistrict() != null && !req.getDistrict().trim().isEmpty() ? req.getDistrict().trim() : "New Delhi", 
+                req.getState() != null && !req.getState().trim().isEmpty() ? req.getState().trim() : "Delhi"
+        ));
+        user.setCreatedAt(nowStr);
+        user.setUpdatedAt(nowStr);
 
         User saved = userRepository.save(user);
 
         Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getPhone(), req.getPassword())
+                new UsernamePasswordAuthenticationToken(phone, req.getPassword())
         );
         String token = tokenProvider.generateToken(auth);
 

@@ -21,6 +21,33 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  const extractErrorMessage = (err, defaultMsg) => {
+    if (err.response) {
+      const data = err.response.data;
+      if (data) {
+        if (typeof data === 'string' && !data.trim().startsWith('<')) {
+          return data;
+        }
+        if (data.message && typeof data.message === 'string') {
+          return data.message;
+        }
+        if (data.error && typeof data.error === 'string') {
+          return data.error;
+        }
+      }
+      if (err.response.status === 401 || err.response.status === 403) {
+        return 'गलत क्रेडेंशियल्स या अनधिकृत अनुरोध (Unauthorized/Invalid credentials).';
+      }
+      if (err.response.status === 409) {
+        return 'यह फ़ोन नंबर, ईमेल या आधार नंबर पहले से पंजीकृत है (Already registered).';
+      }
+    }
+    if (err.code === 'ERR_NETWORK' || !err.response) {
+      return 'सर्वर से संपर्क नहीं हो सका। कृपया इंटरनेट कनेक्शन या बैकएंड जांचें (Unable to connect to server).';
+    }
+    return defaultMsg;
+  };
+
   const login = async (username, password) => {
     try {
       const res = await axios.post('/api/v1/auth/login', { username, password });
@@ -31,8 +58,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('moolya_user', JSON.stringify(user));
       return { success: true, user };
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'लॉगिन विफल हुआ। पासवर्ड या यूजरनेम चेक करें।';
-      return { success: false, message: typeof msg === 'string' ? msg : JSON.stringify(msg) };
+      const msg = extractErrorMessage(err, 'लॉगिन विफल हुआ। पासवर्ड या यूजरनेम चेक करें।');
+      return { success: false, message: msg };
     }
   };
 
@@ -46,8 +73,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('moolya_user', JSON.stringify(user));
       return { success: true, user };
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'किसान पंजीकरण विफल हुआ। मोबाइल नंबर या आधार नंबर जांचें।';
-      return { success: false, message: typeof msg === 'string' ? msg : JSON.stringify(msg) };
+      const msg = extractErrorMessage(err, 'किसान पंजीकरण विफल हुआ। मोबाइल नंबर या आधार नंबर जांचें।');
+      return { success: false, message: msg };
     }
   };
 
@@ -61,8 +88,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('moolya_user', JSON.stringify(user));
       return { success: true, user };
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'खरीदार पंजीकरण विफल हुआ। विवरण जांचें।';
-      return { success: false, message: typeof msg === 'string' ? msg : JSON.stringify(msg) };
+      const msg = extractErrorMessage(err, 'खरीदार पंजीकरण विफल हुआ। विवरण जांचें।');
+      return { success: false, message: msg };
     }
   };
 

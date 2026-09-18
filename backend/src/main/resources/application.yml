@@ -6,11 +6,11 @@ spring:
     name: moolya-backend
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/moolya_db}
+      uri: ${SPRING_DATA_MONGODB_URI:${MONGODB_URI:${MONGO_URI:mongodb://localhost:27017/moolya_db}}}
 
 app:
   jwt:
-    secret: ${APP_JWT_SECRET:9a2f8c7e6d5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f}
+    secret: ${APP_JWT_SECRET:${JWT_SECRET:9a2f8c7e6d5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f}}
     expiration: 86400000
 
 logging:

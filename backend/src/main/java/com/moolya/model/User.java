@@ -1,5 +1,6 @@
 package com.moolya.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -18,6 +19,7 @@ public class User {
     
     private String aadhaar; // Encrypted / Hashed
     
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password; // BCrypt Hashed
     
     private Role role;
